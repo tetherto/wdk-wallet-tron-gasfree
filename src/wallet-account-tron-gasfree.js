@@ -15,31 +15,112 @@
 'use strict'
 
 import { createHmac } from 'crypto'
-
 import { WalletAccountTron } from '@wdk/wallet-tron'
-
-/**
- * @typedef {import("@wdk/wallet").IWalletAccount} IWalletAccount
- */
-
-/** @typedef {import('@wdk/wallet').KeyPair} KeyPair */
+import { SecureTronSigner } from './signer/custom-signer.js'
 
 /** @typedef {import('@wdk/wallet').TransferOptions} TransferOptions */
-
 /** @typedef {import('@wdk/wallet').TransferResult} TransferResult */
 
+/**
+ * @typedef {object} TronGasfreeTransactionReceiptReceiptDetails
+ * @property {number} energy_usage - The amount of energy used by the transaction.
+ * @property {number} energy_fee - The fee paid for the energy used.
+ * @property {number} energy_usage_total - The total energy usage.
+ * @property {number} net_fee - The fee paid for network usage.
+ * @property {string} result - The result of the transaction (e.g., "SUCCESS").
+ */
+
+/**
+ * @typedef {object} TronGasfreeTransactionReceiptLog
+ * @property {string} address - The address of the contract that emitted the log.
+ * @property {string[]} topics - An array of topics for the log.
+ * @property {string} data - The data payload of the log.
+ */
+
+/**
+ * @typedef {object} TronGasfreeTransactionReceiptInternalTransaction
+ * @property {string} hash - The hash of the internal transaction.
+ * @property {string} caller_address - The address of the caller.
+ * @property {string} transferTo_address - The address of the recipient.
+ * @property {object[]} callValueInfo - Information about the value transferred.
+ * @property {string} note - A note associated with the internal transaction.
+ */
+
+/**
+ * @typedef {object} TronGasfreeTransactionReceipt
+ * @property {string} id - The unique identifier for the transaction.
+ * @property {number} fee - The total fee for the transaction.
+ * @property {number} blockNumber - The block number in which the transaction was included.
+ * @property {number} blockTimeStamp - The timestamp of the block.
+ * @property {string[]} contractResult - The result of the contract execution.
+ * @property {string} contract_address - The address of the contract.
+ * @property {TronGasfreeTransactionReceiptReceiptDetails} receipt - The receipt details of the transaction.
+ * @property {TronGasfreeTransactionReceiptLog[]} log - An array of logs emitted by the transaction.
+ * @property {TronGasfreeTransactionReceiptInternalTransaction[]} internal_transactions - An array of internal transactions.
+ */
+
+/**
+ * @typedef {Object} TronGasfreeWalletConfig
+ * @property {Object} paymasterToken - The paymaster token configuration.
+ * @property {string} paymasterToken.address - The address of the paymaster token.
+ * @property {string} provider - The provider URL.
+ * @property {string} gasFreeProvider - The gasfree provider URL.
+ * @property {string} apiKey - The gasfree provider API key.
+ * @property {string} apiSecret - The gasfree provider API secret.
+ * @property {string} serviceProvider - The service provider address.
+ * @property {string} verifyingContract - The verifying contract address.
+ * @property {string} transferMaxFee - The max fee for the transfer.
+ * @property {string} chainId - The chain id.
+ */
+
 export default class WalletAccountTronGasfree extends WalletAccountTron {
-  _gasFreeAccount
+  /**
+   * Creates a new tron gasfree wallet account.
+   *
+   * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
+   * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
+   * @param {TronGasfreeWalletConfig} [config] - The configuration object.
+   */
+  constructor (seed, path, config) {
+    super(seed, path, config)
+
+    /**
+     * The tron gasfree wallet account configuration.
+     *
+     * @protected
+     * @type {TronGasfreeWalletConfig}
+     */
+    this._config = config
+
+    /**
+     * The tron gasfree free account.
+     *
+     * @protected
+     * @type {string}
+     */
+    this._gasFreeAccount = null
+
+    /** @private */
+    this._secureTronSigner = new SecureTronSigner(this.keyPair.privateKey, this._tronWeb)
+  }
 
   /**
-   * Gets the original address from the private key.
-   * @returns {Promise<string>} The original address.
-   * @private
+   * Returns the account's balance for the paymaster token defined in the wallet account configuration.
+   *
+   * @returns {Promise<number>} The paymaster token balance (in base unit).
    */
-  async _getOriginalAddress () {
-    return this._tronWeb.address.fromPrivateKey(
-      Buffer.from(this.keyPair.privateKey).toString('hex')
-    )
+  async getPaymasterTokenBalance () {
+    const { paymasterToken } = this._config
+
+    return await this.getTokenBalance(paymasterToken.address)
+  }
+
+  async sendTransaction (tx) {
+    throw new Error("Method 'sendTransaction(tx)' not supported on tron gasfree.")
+  }
+
+  async quoteSendTransaction (tx) {
+    throw new Error("Method 'quoteSendTransaction(tx)' not supported on tron gasfree.")
   }
 
   /**
@@ -47,81 +128,23 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * @returns {Promise<string>} The account's abstracted address.
    */
   async getAddress () {
-    const address = await this._getOriginalAddress()
-
+    const address = await super.getAddress()
     const gasfreeAccount = await this._getGasfreeAccount(address)
     return gasfreeAccount.gasFreeAddress
   }
 
-  async getBalance () {
-    throw new Error('getBalance is not implemented')
-  }
-
   /**
-   * Quotes a transfer operation.
-   * @param {TransferOptions} params - The transaction parameters.
-   * @returns {Promise<Omit<TransactionResult,'hash'>>} The transaction's quotes.
-   */
-  async quoteTransfer (options) {
-    return await this.transfer({ ...options, simulate: true })
-  }
-
-  /**
-   * Sends a token transaction.
+   * Transfers a token to another address.
    *
-   * @param {TransferOptions} params - The transaction parameters.
-   * @returns {Promise<TransactionResult>} The transaction's hash.
+   * @param {TransferOptions} options - The transfer’s options.
+   * @returns {Promise<TransferResult>} The transfer's result.
    */
-  async transfer (options) {
-    const { token, recipient, amount, simulate } = options
-    const originalAddress = await this._getOriginalAddress()
 
-    if (simulate) {
-      const tokenConfigResponse = await this.makeRequestToGasfreeProvider(
-        'GET',
-        '/api/v1/config/token/all'
-      )
-      const tokenConfigData = await tokenConfigResponse.json()
-
-      if (tokenConfigData.code !== 200) {
-        throw new Error('Failed to fetch token configuration')
-      }
-
-      // Find the token info
-      const tokenInfo = tokenConfigData.data.tokens.find(
-        (t) => t.tokenAddress === token
-      )
-      if (!tokenInfo) {
-        throw new Error('Token not supported')
-      }
-
-      // Check if user account is activated
-      const accountResponse = await this.makeRequestToGasfreeProvider(
-        'GET',
-        `/api/v1/address/${originalAddress}`
-      )
-      const accountData = await accountResponse.json()
-
-      if (accountData.code !== 200) {
-        throw new Error('Failed to fetch account status')
-      }
-
-      // Calculate total fee
-      let totalFee = tokenInfo.transferFee
-      if (!accountData.data.active) {
-        totalFee += tokenInfo.activateFee
-      }
-
-      return {
-        hash: null,
-        fee: totalFee
-      }
-    }
-
+  async transfer ({ token, recipient, amount }) {
+    const originalAddress = await super.getAddress()
     const timestamp = Math.floor(Date.now() / 1_000)
 
-    // Get account info to get recommended nonce and check if we can submit
-    const accountResponse = await this.makeRequestToGasfreeProvider(
+    const accountResponse = await this._makeRequestToGasfreeProvider(
       'GET',
       `/api/v1/address/${originalAddress}`
     )
@@ -131,21 +154,19 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
       throw new Error('Failed to fetch account status')
     }
 
-    // Get token info to calculate fees
     const tokenInfo = accountData.data.assets.find(
       (a) => a.tokenAddress === token
     )
 
     if (!tokenInfo) {
-      throw new Error('Token not supported')
+      throw new Error('Token not supported for this account')
     }
 
-    // Calculate total fee (transfer fee + activation fee if account is not active)
+    // Calculate total fee, including activation fee if the account isn't active
     const totalFee =
       tokenInfo.transferFee +
-      (!accountData.data.active ? tokenInfo.activateFee : 0)
+      (accountData.data.active ? 0 : tokenInfo.activateFee)
 
-    // Use the calculated total fee if maxFee is not provided or is too low
     const effectiveMaxFee = Math.max(this._config.transferMaxFee, totalFee)
 
     const messageForSigning = {
@@ -153,11 +174,11 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
       serviceProvider: this._config.serviceProvider,
       user: originalAddress,
       receiver: recipient,
-      value: amount,
-      maxFee: effectiveMaxFee,
-      deadline: timestamp + 300, // 5 minutes
-      version: 1,
-      nonce: accountData.data.nonce
+      value: String(amount),
+      maxFee: String(effectiveMaxFee),
+      deadline: String(timestamp + 300),
+      version: '1',
+      nonce: String(accountData.data.nonce)
     }
 
     const Permit712MessageDomain = {
@@ -182,15 +203,16 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     }
 
     try {
-      const signature = await this.signTypedData(
+      const signature = await this._secureTronSigner.signTypedData(
         Permit712MessageDomain,
         Permit712MessageTypes,
+        'PermitTransfer',
         messageForSigning
       )
 
       messageForSigning.sig = signature.slice(2)
 
-      const response = await this.makeRequestToGasfreeProvider(
+      const response = await this._makeRequestToGasfreeProvider(
         'POST',
         '/api/v1/gasfree/submit',
         messageForSigning
@@ -202,13 +224,12 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
         throw new Error(returnedData.message)
       }
 
-      // Calculate gas cost from the response data
       const gasCost =
         (returnedData.data.estimatedActivateFee || 0) +
         (returnedData.data.estimatedTransferFee || 0)
 
       return {
-        id: returnedData.data.id,
+        hash: returnedData.data.id,
         fee: gasCost
       }
     } catch (error) {
@@ -218,12 +239,75 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /**
-   * Gets the transfer hash for a given transfer ID.
-   * @param {string} transferId - The transfer ID.
-   * @returns {Promise<string>} The transfer hash.
+   * Quotes the costs of a transfer operation.
+   *
+   * @param {TransferOptions} options - The transfer’s options.
+   * @returns {Promise<Omit<TransferResult,'hash'>>} The transfer’s quotes.
    */
-  async getTransferHash (transferId) {
-    const response = await this.makeRequestToGasfreeProvider(
+  async quoteTransfer ({ token }) {
+    const originalAddress = await super.getAddress()
+
+    const tokenConfigResponse = await this._makeRequestToGasfreeProvider(
+      'GET',
+      '/api/v1/config/token/all'
+    )
+    const tokenConfigData = await tokenConfigResponse.json()
+
+    if (tokenConfigData.code !== 200) {
+      throw new Error('Failed to fetch token configuration')
+    }
+
+    const tokenInfo = tokenConfigData.data.tokens.find(
+      (t) => t.tokenAddress === token
+    )
+
+    if (!tokenInfo) {
+      throw new Error('Token not supported')
+    }
+
+    const accountResponse = await this._makeRequestToGasfreeProvider(
+      'GET',
+      `/api/v1/address/${originalAddress}`
+    )
+    const accountData = await accountResponse.json()
+
+    if (accountData.code !== 200) {
+      throw new Error('Failed to fetch account status')
+    }
+
+    // Calculate the total fee, including an activation fee if the account is not yet active
+    let totalFee = tokenInfo.transferFee
+    if (!accountData.data.active) {
+      totalFee += tokenInfo.activateFee
+    }
+
+    return {
+      fee: totalFee
+    }
+  }
+
+  /**
+   * Returns a transaction's receipt.
+   *
+   * @param {string} hash - The transaction's hash.
+   * @returns {Promise<TronGasfreeTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
+   */
+  async getTransactionReceipt (hash) {
+    try {
+      const txHash = await this._getTransferHash(hash)
+      const receipt = await this._tronWeb.trx.getTransactionInfo(txHash)
+      return receipt
+    } catch (error) {
+      if (error.message.includes('Transaction hash not available yet')) {
+        return null
+      }
+      throw error
+    }
+  }
+
+  /** @private */
+  async _getTransferHash (transferId) {
+    const response = await this._makeRequestToGasfreeProvider(
       'GET',
       `/api/v1/gasfree/${transferId}`
     )
@@ -243,14 +327,11 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     return returnedData.data.txnHash
   }
 
-
-  /**
-   * @private
-   */
+  /** @private */
   async _getGasfreeAccount (address) {
     if (this._gasFreeAccount) return this._gasFreeAccount
 
-    const response = await this.makeRequestToGasfreeProvider(
+    const response = await this._makeRequestToGasfreeProvider(
       'GET',
       `/api/v1/address/${address}`
     )
@@ -280,7 +361,8 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     }
   }
 
-  async makeRequestToGasfreeProvider (method, path, body = null) {
+  /** @private */
+  async _makeRequestToGasfreeProvider (method, path, body = null) {
     const timestamp = Math.floor(Date.now() / 1000)
     const message = method + path + timestamp
 

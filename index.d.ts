@@ -1,8 +1,10 @@
-export type Account = any;
-export type TronGasfreeWalletConfig = any;
-export type TransferOptions = any;
-export type TransferResult = any;
-export type SwapOptions = any;
-export type SwapResult = any;
-export type BridgeOptions = any;
-export type BridgeResult = any;
+export { default } from "./src/wallet-manager-tron-gasfree.js";
+export { default as WalletAccountTronGasfree } from "./src/wallet-account-tron-gasfree.js";
+export type FeeRates = import("@wdk/wallet-tron").FeeRates;
+export type KeyPair = import("@wdk/wallet-tron").KeyPair;
+export type TronTransaction = import("@wdk/wallet-tron").TronTransaction;
+export type TransactionResult = import("@wdk/wallet-tron").TransactionResult;
+export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
+export type TransferResult = import("@wdk/wallet-tron").TransferResult;
+export type TronGasfreeTransactionReceipt = import("./src/wallet-account-tron-gasfree.js").TronGasfreeTransactionReceipt;
+export type TronGasfreeWalletConfig = import("./src/wallet-account-tron-gasfree.js").TronGasfreeWalletConfig;

@@ -13,12 +13,16 @@
     "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage"
   },
   "dependencies": {
-    "@wdk/wallet-tron": "github:itsdeka/wdk-wallet-tron-main-1"
+    "@noble/curves": "1.9.2",
+    "@noble/hashes": "1.8.0",
+    "@noble/secp256k1": "2.3.0",
+    "@wdk/wallet-tron": "github:itsdeka/wdk-wallet-tron-main-1",
+    "ethers": "6.15.0"
   },
   "devDependencies": {
     "bip39": "3.1.0",
-    "cross-env": "^7.0.3",
-    "jest": "^29.7.0",
+    "cross-env": "7.0.3",
+    "jest": "29.7.0",
     "rimraf": "6.0.1",
     "standard": "17.1.2",
     "typescript": "5.8.3"

@@ -13,14 +13,16 @@
 // limitations under the License.
 'use strict'
 
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').Account} Account */
+/** @typedef {import('@wdk/wallet-tron').FeeRates} FeeRates */
+/** @typedef {import('@wdk/wallet-tron').KeyPair} KeyPair */
+/** @typedef {import('@wdk/wallet-tron').TronTransaction} TronTransaction */
+/** @typedef {import('@wdk/wallet-tron').TransactionResult} TransactionResult */
+/** @typedef {import('@wdk/wallet-tron').TransferOptions} TransferOptions */
+/** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
+
+/** @typedef {import('./src/wallet-account-tron-gasfree.js').TronGasfreeTransactionReceipt} TronGasfreeTransactionReceipt */
 /** @typedef {import('./src/wallet-account-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
 
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').TransferOptions} TransferOptions */
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').TransferResult} TransferResult */
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').SwapOptions} SwapOptions */
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').SwapResult} SwapResult */
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').BridgeOptions} BridgeOptions */
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').BridgeResult} BridgeResult */
+export { default } from './src/wallet-manager-tron-gasfree.js'
 
-export { default } from './src/wallet-account-tron-gasfree.js'
+export { default as WalletAccountTronGasfree } from './src/wallet-account-tron-gasfree.js'

@@ -1,7 +1,8 @@
 {
   "include": [ 
     "index.js",
-    "src/wallet-manager-tron-gasfree.js"
+    "src/wallet-manager-tron-gasfree.js",
+    "src/wallet-account-tron-gasfree.js"
   ],
   "compilerOptions": {
     "target": "ES2015",
