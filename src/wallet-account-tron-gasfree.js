@@ -16,7 +16,7 @@
 
 import { createHmac } from 'crypto'
 import { WalletAccountTron } from '@wdk/wallet-tron'
-import { SecureTronSigner } from './signer/custom-signer.js'
+import { secp256k1 } from '@noble/curves/secp256k1'
 
 /** @typedef {import('@wdk/wallet').TransferOptions} TransferOptions */
 /** @typedef {import('@wdk/wallet').TransferResult} TransferResult */
@@ -73,6 +73,20 @@ import { SecureTronSigner } from './signer/custom-signer.js'
  * @property {string} chainId - The chain id.
  */
 
+const PERMIT_712_TYPES = {
+  PermitTransfer: [
+    { name: 'token', type: 'address' },
+    { name: 'serviceProvider', type: 'address' },
+    { name: 'user', type: 'address' },
+    { name: 'receiver', type: 'address' },
+    { name: 'value', type: 'uint256' },
+    { name: 'maxFee', type: 'uint256' },
+    { name: 'deadline', type: 'uint256' },
+    { name: 'version', type: 'uint256' },
+    { name: 'nonce', type: 'uint256' }
+  ]
+}
+
 export default class WalletAccountTronGasfree extends WalletAccountTron {
   /**
    * Creates a new tron gasfree wallet account.
@@ -81,7 +95,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
    * @param {TronGasfreeWalletConfig} [config] - The configuration object.
    */
-  constructor (seed, path, config) {
+  constructor(seed, path, config) {
     super(seed, path, config)
 
     /**
@@ -99,9 +113,6 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
      * @type {string}
      */
     this._gasFreeAccount = null
-
-    /** @private */
-    this._secureTronSigner = new SecureTronSigner(this.keyPair.privateKey, this._tronWeb)
   }
 
   /**
@@ -109,17 +120,17 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    *
    * @returns {Promise<number>} The paymaster token balance (in base unit).
    */
-  async getPaymasterTokenBalance () {
+  async getPaymasterTokenBalance() {
     const { paymasterToken } = this._config
 
     return await this.getTokenBalance(paymasterToken.address)
   }
 
-  async sendTransaction (tx) {
+  async sendTransaction(tx) {
     throw new Error("Method 'sendTransaction(tx)' not supported on tron gasfree.")
   }
 
-  async quoteSendTransaction (tx) {
+  async quoteSendTransaction(tx) {
     throw new Error("Method 'quoteSendTransaction(tx)' not supported on tron gasfree.")
   }
 
@@ -127,7 +138,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * Returns the account's address.
    * @returns {Promise<string>} The account's abstracted address.
    */
-  async getAddress () {
+  async getAddress() {
     const address = await super.getAddress()
     const gasfreeAccount = await this._getGasfreeAccount(address)
     return gasfreeAccount.gasFreeAddress
@@ -140,21 +151,13 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * @returns {Promise<TransferResult>} The transfer's result.
    */
 
-  async transfer ({ token, recipient, amount }) {
+  async transfer({ token, recipient, amount }) {
     const originalAddress = await super.getAddress()
     const timestamp = Math.floor(Date.now() / 1_000)
 
-    const accountResponse = await this._makeRequestToGasfreeProvider(
-      'GET',
-      `/api/v1/address/${originalAddress}`
-    )
-    const accountData = await accountResponse.json()
+    const gasfreeAccount = await this._getGasfreeAccount(originalAddress)
 
-    if (accountData.code !== 200) {
-      throw new Error('Failed to fetch account status')
-    }
-
-    const tokenInfo = accountData.data.assets.find(
+    const tokenInfo = gasfreeAccount.assets.find(
       (a) => a.tokenAddress === token
     )
 
@@ -165,7 +168,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     // Calculate total fee, including activation fee if the account isn't active
     const totalFee =
       tokenInfo.transferFee +
-      (accountData.data.active ? 0 : tokenInfo.activateFee)
+      (gasfreeAccount.active ? 0 : tokenInfo.activateFee)
 
     const effectiveMaxFee = Math.max(this._config.transferMaxFee, totalFee)
 
@@ -178,7 +181,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
       maxFee: String(effectiveMaxFee),
       deadline: String(timestamp + 300),
       version: '1',
-      nonce: String(accountData.data.nonce)
+      nonce: String(gasfreeAccount.nonce)
     }
 
     const Permit712MessageDomain = {
@@ -188,53 +191,32 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
       verifyingContract: this._config.verifyingContract
     }
 
-    const Permit712MessageTypes = {
-      PermitTransfer: [
-        { name: 'token', type: 'address' },
-        { name: 'serviceProvider', type: 'address' },
-        { name: 'user', type: 'address' },
-        { name: 'receiver', type: 'address' },
-        { name: 'value', type: 'uint256' },
-        { name: 'maxFee', type: 'uint256' },
-        { name: 'deadline', type: 'uint256' },
-        { name: 'version', type: 'uint256' },
-        { name: 'nonce', type: 'uint256' }
-      ]
+    const signature = this._signTypedData(
+      Permit712MessageDomain,
+      messageForSigning
+    )
+
+    messageForSigning.sig = signature.slice(2)
+
+    const response = await this._makeRequestToGasfreeProvider(
+      'POST',
+      '/api/v1/gasfree/submit',
+      messageForSigning
+    )
+
+    const returnedData = await response.json()
+
+    if (returnedData.code !== 200) {
+      throw new Error(returnedData.message)
     }
 
-    try {
-      const signature = await this._secureTronSigner.signTypedData(
-        Permit712MessageDomain,
-        Permit712MessageTypes,
-        'PermitTransfer',
-        messageForSigning
-      )
+    const gasCost =
+      (returnedData.data.estimatedActivateFee || 0) +
+      (returnedData.data.estimatedTransferFee || 0)
 
-      messageForSigning.sig = signature.slice(2)
-
-      const response = await this._makeRequestToGasfreeProvider(
-        'POST',
-        '/api/v1/gasfree/submit',
-        messageForSigning
-      )
-
-      const returnedData = await response.json()
-
-      if (returnedData.code === 400) {
-        throw new Error(returnedData.message)
-      }
-
-      const gasCost =
-        (returnedData.data.estimatedActivateFee || 0) +
-        (returnedData.data.estimatedTransferFee || 0)
-
-      return {
-        hash: returnedData.data.id,
-        fee: gasCost
-      }
-    } catch (error) {
-      console.error('Transfer error:', error)
-      throw error
+    return {
+      hash: returnedData.data.id,
+      fee: gasCost
     }
   }
 
@@ -244,7 +226,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * @param {TransferOptions} options - The transfer’s options.
    * @returns {Promise<Omit<TransferResult,'hash'>>} The transfer’s quotes.
    */
-  async quoteTransfer ({ token }) {
+  async quoteTransfer({ token }) {
     const originalAddress = await super.getAddress()
 
     const tokenConfigResponse = await this._makeRequestToGasfreeProvider(
@@ -265,19 +247,11 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
       throw new Error('Token not supported')
     }
 
-    const accountResponse = await this._makeRequestToGasfreeProvider(
-      'GET',
-      `/api/v1/address/${originalAddress}`
-    )
-    const accountData = await accountResponse.json()
-
-    if (accountData.code !== 200) {
-      throw new Error('Failed to fetch account status')
-    }
+    const gasfreeAccount = await this._getGasfreeAccount(originalAddress)
 
     // Calculate the total fee, including an activation fee if the account is not yet active
     let totalFee = tokenInfo.transferFee
-    if (!accountData.data.active) {
+    if (!gasfreeAccount.active) {
       totalFee += tokenInfo.activateFee
     }
 
@@ -292,11 +266,11 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * @param {string} hash - The transaction's hash.
    * @returns {Promise<TronGasfreeTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
    */
-  async getTransactionReceipt (hash) {
+  async getTransactionReceipt(hash) {
     try {
       const txHash = await this._getTransferHash(hash)
-      const receipt = await this._tronWeb.trx.getTransactionInfo(txHash)
-      return receipt
+
+      return await super.getTransactionReceipt(txHash)
     } catch (error) {
       if (error.message.includes('Transaction hash not available yet')) {
         return null
@@ -306,7 +280,17 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /** @private */
-  async _getTransferHash (transferId) {
+  _signTypedData(domain, value) {
+    const messageDigest = this._tronWeb.utils._TypedDataEncoder.hash(domain, PERMIT_712_TYPES, value).slice(2);
+    const signature = secp256k1.sign(messageDigest, this.keyPair.privateKey)
+    const r = signature.r.toString(16).padStart(64, '0')
+    const s = signature.s.toString(16).padStart(64, '0')
+    const v = (signature.recovery + 27).toString(16).padStart(2, '0')
+    return `0x${r}${s}${v}`
+  }
+
+  /** @private */
+  async _getTransferHash(transferId) {
     const response = await this._makeRequestToGasfreeProvider(
       'GET',
       `/api/v1/gasfree/${transferId}`
@@ -328,7 +312,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /** @private */
-  async _getGasfreeAccount (address) {
+  async _getGasfreeAccount(address) {
     if (this._gasFreeAccount) return this._gasFreeAccount
 
     const response = await this._makeRequestToGasfreeProvider(
@@ -336,33 +320,18 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
       `/api/v1/address/${address}`
     )
 
-    const responseText = await response.text()
-    let data
-    try {
-      data = JSON.parse(responseText)
-    } catch (error) {
-      throw new Error('Invalid response format')
-    }
+    const { data, code } = await response.json()
 
-    if (response.ok) {
-      if (!data || !data.data) {
-        throw new Error('Invalid response format: missing data field')
-      }
-      this._gasFreeAccount = data.data
+    if (code === 200) { 
+      this._gasFreeAccount = data
       return this._gasFreeAccount
     }
 
-    if (response.status === 401) {
-      throw new Error('unauthorized')
-    } else if (response.status === 404) {
-      throw new Error('address not found')
-    } else {
-      throw new Error(`unknown error: ${data.message || response.status}`)
-    }
+    throw new Error(data.message || 'Failed to get gasfree account')
   }
 
   /** @private */
-  async _makeRequestToGasfreeProvider (method, path, body = null) {
+  async _makeRequestToGasfreeProvider(method, path, body = null) {
     const timestamp = Math.floor(Date.now() / 1000)
     const message = method + path + timestamp
 
