@@ -18,14 +18,14 @@ import WalletManagerTron from '@wdk/wallet-tron'
 
 import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js'
 
-/** @typedef {import('./wallet-account-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
+/** @typedef {import('./wallet-account-tron-gasfree.js').TronGasFreeWalletConfig} TronGasFreeWalletConfig */
 
 export default class WalletManagerTronGasfree extends WalletManagerTron {
   /**
    * Creates a new wallet manager for the tron blockchain that implements gasfree features.
    *
    * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
-   * @param {TronGasfreeWalletConfig} [config] - The configuration object.
+   * @param {TronGasFreeWalletConfig} [config] - The configuration object.
    */
   constructor (seed, config) {
     super(seed, config)
@@ -34,7 +34,7 @@ export default class WalletManagerTronGasfree extends WalletManagerTron {
      * The tron gasfree wallet configuration.
      *
      * @protected
-     * @type {TronGasfreeWalletConfig}
+     * @type {TronGasFreeWalletConfig}
      */
     this._config = config
   }

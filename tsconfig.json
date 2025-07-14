@@ -12,6 +12,9 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "noResolve": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "typeRoots": [
+      "./node_modules/@wdk/"
+    ]
   }
 }

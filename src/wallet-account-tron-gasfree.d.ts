@@ -1,217 +1,84 @@
-/** @typedef {import('@wdk/wallet').TransferOptions} TransferOptions */
-/** @typedef {import('@wdk/wallet').TransferResult} TransferResult */
-/**
- * @typedef {object} TronGasfreeTransactionReceiptReceiptDetails
- * @property {number} energy_usage - The amount of energy used by the transaction.
- * @property {number} energy_fee - The fee paid for the energy used.
- * @property {number} energy_usage_total - The total energy usage.
- * @property {number} net_fee - The fee paid for network usage.
- * @property {string} result - The result of the transaction (e.g., "SUCCESS").
- */
-/**
- * @typedef {object} TronGasfreeTransactionReceiptLog
- * @property {string} address - The address of the contract that emitted the log.
- * @property {string[]} topics - An array of topics for the log.
- * @property {string} data - The data payload of the log.
- */
-/**
- * @typedef {object} TronGasfreeTransactionReceiptInternalTransaction
- * @property {string} hash - The hash of the internal transaction.
- * @property {string} caller_address - The address of the caller.
- * @property {string} transferTo_address - The address of the recipient.
- * @property {object[]} callValueInfo - Information about the value transferred.
- * @property {string} note - A note associated with the internal transaction.
- */
-/**
- * @typedef {object} TronGasfreeTransactionReceipt
- * @property {string} id - The unique identifier for the transaction.
- * @property {number} fee - The total fee for the transaction.
- * @property {number} blockNumber - The block number in which the transaction was included.
- * @property {number} blockTimeStamp - The timestamp of the block.
- * @property {string[]} contractResult - The result of the contract execution.
- * @property {string} contract_address - The address of the contract.
- * @property {TronGasfreeTransactionReceiptReceiptDetails} receipt - The receipt details of the transaction.
- * @property {TronGasfreeTransactionReceiptLog[]} log - An array of logs emitted by the transaction.
- * @property {TronGasfreeTransactionReceiptInternalTransaction[]} internal_transactions - An array of internal transactions.
- */
-/**
- * @typedef {Object} TronGasfreeWalletConfig
- * @property {Object} paymasterToken - The paymaster token configuration.
- * @property {string} paymasterToken.address - The address of the paymaster token.
- * @property {string} provider - The provider URL.
- * @property {string} gasFreeProvider - The gasfree provider URL.
- * @property {string} apiKey - The gasfree provider API key.
- * @property {string} apiSecret - The gasfree provider API secret.
- * @property {string} serviceProvider - The service provider address.
- * @property {string} verifyingContract - The verifying contract address.
- * @property {string} transferMaxFee - The max fee for the transfer.
- * @property {string} chainId - The chain id.
- */
-export default class WalletAccountTronGasfree {
+export default class WalletAccountTronGasfree extends WalletAccountTron {
     /**
      * Creates a new tron gasfree wallet account.
      *
      * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
      * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
-     * @param {TronGasfreeWalletConfig} [config] - The configuration object.
+     * @param {TronGasFreeWalletConfig} [config] - The configuration object.
      */
-    constructor(seed: string | Uint8Array, path: string, config?: TronGasfreeWalletConfig);
-    /**
-     * The tron gasfree wallet account configuration.
-     *
-     * @protected
-     * @type {TronGasfreeWalletConfig}
-     */
-    protected _config: TronGasfreeWalletConfig;
-    /**
-     * The tron gasfree free account.
-     *
-     * @protected
-     * @type {string}
-     */
-    protected _gasFreeAccount: string;
+    constructor(seed: string | Uint8Array, path: string, config?: TronGasFreeWalletConfig);
     /** @private */
-    private _secureTronSigner;
+    private _gasFreeAccount;
     /**
      * Returns the account's balance for the paymaster token defined in the wallet account configuration.
      *
      * @returns {Promise<number>} The paymaster token balance (in base unit).
      */
     getPaymasterTokenBalance(): Promise<number>;
-    sendTransaction(tx: any): Promise<void>;
-    quoteSendTransaction(tx: any): Promise<void>;
-    /**
-     * Returns the account's address.
-     * @returns {Promise<string>} The account's abstracted address.
-     */
-    getAddress(): Promise<string>;
     /**
      * Transfers a token to another address.
      *
-     * @param {TransferOptions} options - The transfer’s options.
+     * @param {TransferOptions} options - The transfer's options.
      * @returns {Promise<TransferResult>} The transfer's result.
      */
     transfer({ token, recipient, amount }: TransferOptions): Promise<TransferResult>;
     /**
      * Quotes the costs of a transfer operation.
      *
-     * @param {TransferOptions} options - The transfer’s options.
-     * @returns {Promise<Omit<TransferResult,'hash'>>} The transfer’s quotes.
+     * @see {@link transfer}
+     * @param {TransferOptions} options - The transfer's options.
+     * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
      */
     quoteTransfer({ token }: TransferOptions): Promise<Omit<TransferResult, "hash">>;
     /**
      * Returns a transaction's receipt.
      *
      * @param {string} hash - The transaction's hash.
-     * @returns {Promise<TronGasfreeTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
+     * @returns {Promise<TronTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
      */
-    getTransactionReceipt(hash: string): Promise<TronGasfreeTransactionReceipt | null>;
+    getTransactionReceipt(hash: string): Promise<TronTransactionReceipt | null>;
     /** @private */
-    private _getTransferHash;
+    private _signTypedData;
     /** @private */
     private _getGasfreeAccount;
     /** @private */
-    private _makeRequestToGasfreeProvider;
+    private _getTokenTransferHash;
+    /** @private */
+    private _sendRequestToGasFreeProvider;
 }
-export type TransferOptions = any;
-export type TransferResult = any;
-export type TronGasfreeTransactionReceiptReceiptDetails = {
+export type TronWeb = import("@wdk/wallet-tron").default;
+export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
+export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
+export type TransferResult = import("@wdk/wallet-tron").TransferResult;
+export type TronGasFreeWalletConfig = {
     /**
-     * - The amount of energy used by the transaction.
+     * - The blockchain's id.
      */
-    energy_usage: number;
+    chainId: string;
     /**
-     * - The fee paid for the energy used.
+     * - The url of the tron web provider, or an instance of the {@link TronWeb} class.
      */
-    energy_fee: number;
+    provider: string | TronWeb;
     /**
-     * - The total energy usage.
+     * - The gasfree provider's url.
      */
-    energy_usage_total: number;
+    gasFreeProvider: string;
     /**
-     * - The fee paid for network usage.
+     * - The gasfree provider's api key.
      */
-    net_fee: number;
+    gasFreeApiKey: string;
     /**
-     * - The result of the transaction (e.g., "SUCCESS").
+     * - The gasfree provider's api secret.
      */
-    result: string;
-};
-export type TronGasfreeTransactionReceiptLog = {
+    gasFreeApiSecret: string;
     /**
-     * - The address of the contract that emitted the log.
+     * - The address of the service provider.
      */
-    address: string;
+    serviceProvider: string;
     /**
-     * - An array of topics for the log.
+     * - The address of the verifying contract.
      */
-    topics: string[];
-    /**
-     * - The data payload of the log.
-     */
-    data: string;
-};
-export type TronGasfreeTransactionReceiptInternalTransaction = {
-    /**
-     * - The hash of the internal transaction.
-     */
-    hash: string;
-    /**
-     * - The address of the caller.
-     */
-    caller_address: string;
-    /**
-     * - The address of the recipient.
-     */
-    transferTo_address: string;
-    /**
-     * - Information about the value transferred.
-     */
-    callValueInfo: object[];
-    /**
-     * - A note associated with the internal transaction.
-     */
-    note: string;
-};
-export type TronGasfreeTransactionReceipt = {
-    /**
-     * - The unique identifier for the transaction.
-     */
-    id: string;
-    /**
-     * - The total fee for the transaction.
-     */
-    fee: number;
-    /**
-     * - The block number in which the transaction was included.
-     */
-    blockNumber: number;
-    /**
-     * - The timestamp of the block.
-     */
-    blockTimeStamp: number;
-    /**
-     * - The result of the contract execution.
-     */
-    contractResult: string[];
-    /**
-     * - The address of the contract.
-     */
-    contract_address: string;
-    /**
-     * - The receipt details of the transaction.
-     */
-    receipt: TronGasfreeTransactionReceiptReceiptDetails;
-    /**
-     * - An array of logs emitted by the transaction.
-     */
-    log: TronGasfreeTransactionReceiptLog[];
-    /**
-     * - An array of internal transactions.
-     */
-    internal_transactions: TronGasfreeTransactionReceiptInternalTransaction[];
-};
-export type TronGasfreeWalletConfig = {
+    verifyingContract: string;
     /**
      * - The paymaster token configuration.
      */
@@ -219,35 +86,8 @@ export type TronGasfreeWalletConfig = {
         address: string;
     };
     /**
-     * - The provider URL.
+     * - The maximum fee amount for transfer operations.
      */
-    provider: string;
-    /**
-     * - The gasfree provider URL.
-     */
-    gasFreeProvider: string;
-    /**
-     * - The gasfree provider API key.
-     */
-    apiKey: string;
-    /**
-     * - The gasfree provider API secret.
-     */
-    apiSecret: string;
-    /**
-     * - The service provider address.
-     */
-    serviceProvider: string;
-    /**
-     * - The verifying contract address.
-     */
-    verifyingContract: string;
-    /**
-     * - The max fee for the transfer.
-     */
-    transferMaxFee: string;
-    /**
-     * - The chain id.
-     */
-    chainId: string;
+    transferMaxFee?: number;
 };
+import { WalletAccountTron } from '@wdk/wallet-tron';

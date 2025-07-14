@@ -6,5 +6,5 @@ export type TronTransaction = import("@wdk/wallet-tron").TronTransaction;
 export type TransactionResult = import("@wdk/wallet-tron").TransactionResult;
 export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
 export type TransferResult = import("@wdk/wallet-tron").TransferResult;
-export type TronGasfreeTransactionReceipt = import("./src/wallet-account-tron-gasfree.js").TronGasfreeTransactionReceipt;
-export type TronGasfreeWalletConfig = import("./src/wallet-account-tron-gasfree.js").TronGasfreeWalletConfig;
+export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
+export type TronGasFreeWalletConfig = import("./src/wallet-account-tron-gasfree.js").TronGasFreeWalletConfig;

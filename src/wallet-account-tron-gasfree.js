@@ -29,7 +29,7 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 /** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
 
 /**
- * @typedef {Object} TronGasfreeWalletConfig
+ * @typedef {Object} TronGasFreeWalletConfig
  * @property {string} chainId - The blockchain's id.
  * @property {string | TronWeb} provider - The url of the tron web provider, or an instance of the {@link TronWeb} class.
  * @property {string} gasFreeProvider - The gasfree provider's url.
@@ -62,7 +62,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    *
    * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
    * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
-   * @param {TronGasfreeWalletConfig} [config] - The configuration object.
+   * @param {TronGasFreeWalletConfig} [config] - The configuration object.
    */
   constructor(seed, path, config) {
     super(seed, path, config)
@@ -71,7 +71,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
      * The tron gasfree wallet account configuration.
      *
      * @protected
-     * @type {TronGasfreeWalletConfig}
+     * @type {TronGasFreeWalletConfig}
      */
     this._config = config
 
@@ -79,11 +79,6 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     this._gasFreeAccount = undefined
   }
 
-  /**
-   * Returns the account's gasfree address.
-   * 
-   * @returns {Promise<string>} The account's gasfree address.
-   */
   async getAddress() {
     const { gasFreeAddress } = await this._getGasfreeAccount()
 

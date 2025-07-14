@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 'use strict'
 
 /** @typedef {import('@wdk/wallet-tron').FeeRates} FeeRates */
@@ -19,9 +20,9 @@
 /** @typedef {import('@wdk/wallet-tron').TransactionResult} TransactionResult */
 /** @typedef {import('@wdk/wallet-tron').TransferOptions} TransferOptions */
 /** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
+/** @typedef {import('@wdk/wallet-tron').TronTransactionReceipt} TronTransactionReceipt */
 
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').TronGasfreeTransactionReceipt} TronGasfreeTransactionReceipt */
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
+/** @typedef {import('./src/wallet-account-tron-gasfree.js').TronGasFreeWalletConfig} TronGasFreeWalletConfig */
 
 export { default } from './src/wallet-manager-tron-gasfree.js'
 
