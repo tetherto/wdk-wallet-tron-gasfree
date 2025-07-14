@@ -168,13 +168,13 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   async quoteTransfer ({ token, recipient, amount }) {
     const gasFreeAccount = await this._getGasfreeAccount()
 
-    const response = await this._sendRequestToGasfreeProvider('GET', '/api/v1/config/token/all')
+    const response = await this._sendRequestToGasFreeProvider('GET', '/api/v1/config/token/all')
 
     const { data } = await response.json()
 
-    const token = data.tokens.find(({ tokenAddress }) => tokenAddress === token)
+    const paymasterToken = data.tokens.find(({ tokenAddress }) => tokenAddress === token)
 
-    const fee = token.transferFee + (+gasFreeAccount.active * token.activateFee)
+    const fee = paymasterToken.transferFee + (+gasFreeAccount.active * paymasterToken.activateFee)
 
     return { fee }
   }
