@@ -1,0 +1,20 @@
+{
+  "include": [ 
+    "index.js",
+    "src/wallet-manager-tron-gasfree.js",
+    "src/wallet-account-tron-gasfree.js"
+  ],
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "allowJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noResolve": true,
+    "skipLibCheck": true,
+    "typeRoots": [
+      "./node_modules/@wdk/"
+    ]
+  }
+}
