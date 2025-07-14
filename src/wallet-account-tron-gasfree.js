@@ -108,7 +108,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    *
    * @param {TransferOptions} options - The transfer's options.
    * @param {Object} [config] - A configuration object containing additional options.
-   * @param {number} [transferMaxFee] - The maximum fee amount for the transfer operation.
+   * @param {number} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
    * @returns {Promise<TransferResult>} The transfer's result.
    */
   async transfer ({ token, recipient, amount }, config = {}) {
