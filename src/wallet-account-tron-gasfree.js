@@ -22,11 +22,9 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 
 /** @typedef {import('tronweb').default } TronWeb */
 
-/** @typedef {import('@wdk/wallet-tron').TronTransactionReceipt } TronTransactionReceipt  */
-
 /** @typedef {import('@wdk/wallet-tron').TransferOptions} TransferOptions */
-
 /** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
+/** @typedef {import('@wdk/wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
 
 /**
  * @typedef {Object} TronGasFreeWalletConfig
@@ -37,9 +35,6 @@ import { secp256k1 } from '@noble/curves/secp256k1'
  * @property {string} gasFreeApiSecret - The gasfree provider's api secret.
  * @property {string} serviceProvider - The address of the service provider.
  * @property {string} verifyingContract - The address of the verifying contract.
- * @property {Object} paymasterToken - The paymaster token configuration.
- * @property {string} paymasterToken.address - The address of the paymaster token.
- * @property {number} [transferMaxFee] - The maximum fee amount for transfer operations.
  */
 
 const PERMIT_712_TYPES = {
@@ -55,6 +50,10 @@ const PERMIT_712_TYPES = {
     { name: 'nonce', type: 'uint256' }
   ]
 }
+
+const TOKEN_TRANSFER_DEADLINE = 300
+
+const TOKEN_TRANSFER_SIGNATURE_VERSION = 1
 
 export default class WalletAccountTronGasfree extends WalletAccountTron {
   /**
@@ -105,27 +104,26 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /**
-   * Transfers a token to another address.
+   * Transfers a token to another address, paying gas fees with the transferred token.
    *
    * @param {TransferOptions} options - The transfer's options.
-   * @param {Pick<TronGasFreeWalletConfig, 'paymasterToken' | 'transferMaxFee'>} [config] - If set, overrides the 'paymasterToken' and 'transferMaxFee' options defined in the wallet account configuration.
+   * @param {Object} [config] - A configuration object containing additional options.
+   * @param {number} [transferMaxFee] - The maximum fee amount for the transfer operation.
    * @returns {Promise<TransferResult>} The transfer's result.
    */
-  async transfer ({ token, recipient, amount }, config) {
-    const { transferMaxFee } = config ?? this._config
-
+  async transfer ({ token, recipient, amount }, config = {}) {
     const address = await super.getAddress()
 
     const gasFreeAccount = await this._getGasfreeAccount()
 
-    const timestamp = Math.floor(Date.now() / 1_000)
-
-    const { fee: feeEstimate } = await this.quoteTransfer({ token, recipient, amount }, config)
+    const { fee: feeEstimate } = await this.quoteTransfer({ token, recipient, amount })
 
     // eslint-disable-next-line eqeqeq
-    if (transferMaxFee !== undefined && feeEstimate >= transferMaxFee) {
+    if (config.transferMaxFee !== undefined && feeEstimate >= config.transferMaxFee) {
       throw new Error('The transfer operation exceeds the transfer max fee.')
     }
+
+    const timestamp = Math.floor(Date.now() / 1_000)
 
     const Permit712MessageDomain = {
       name: 'GasFreeController',
@@ -141,25 +139,21 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
       receiver: recipient,
       value: amount,
       maxFee: feeEstimate,
-      deadline: timestamp + 300,
-      version: 1,
+      deadline: timestamp + TOKEN_TRANSFER_DEADLINE,
+      version: TOKEN_TRANSFER_SIGNATURE_VERSION,
       nonce: gasFreeAccount.nonce
     }
 
     const signature = this._signTypedData(Permit712MessageDomain, message)
 
-    const response = await this._sendRequestToGasFreeProvider(
-      'POST',
-      '/api/v1/gasfree/submit',
-      {
-        ...message,
-        sig: signature.slice(2)
-      }
-    )
+    const response = await this._sendRequestToGasFreeProvider('POST', '/api/v1/gasfree/submit', {
+      ...message,
+      sig: signature.slice(2)
+    })
 
     const { data } = await response.json()
 
-    const fee = (data.estimatedTransferFee || 0) + (data.estimatedActivateFee || 0)
+    const fee = data.estimatedTransferFee + data.estimatedActivateFee
 
     return { hash: data.id, fee }
   }
@@ -169,19 +163,20 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    *
    * @see {@link transfer}
    * @param {TransferOptions} options - The transfer's options.
-   * @param {Pick<TronGasFreeWalletConfig, 'transferMaxFee'>} [config] - If set, overrides the 'transferMaxFee' option defined in the wallet account configuration.
    * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
    */
-  async quoteTransfer (options, config) {
-    const { paymasterToken } = config ?? this._config
-
+  async quoteTransfer ({ token, recipient, amount }) {
     const gasFreeAccount = await this._getGasfreeAccount()
 
-    const { transferFee, activateFee } = gasFreeAccount.assets.find(({ tokenAddress }) => tokenAddress === paymasterToken.address)
+    const response = await this._sendRequestToGasfreeProvider('GET', '/api/v1/config/token/all')
 
-    const maxFee = transferFee + (gasFreeAccount.active ? 0 : activateFee)
+    const { data } = await response.json()
 
-    return { fee: maxFee }
+    const token = data.tokens.find(({ tokenAddress }) => tokenAddress === token)
+
+    const fee = token.transferFee + (+gasFreeAccount.active * token.activateFee)
+
+    return { fee }
   }
 
   /**
@@ -210,7 +205,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     const s = signature.s.toString(16).padStart(64, '0')
     const v = (signature.recovery + 27).toString(16).padStart(2, '0')
 
-    return `0x${r}${s}${v}`
+    return '0x' + r + s + v
   }
 
   /** @private */
@@ -238,7 +233,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /** @private */
-  async _sendRequestToGasFreeProvider (method, path, body = null) {
+  async _sendRequestToGasFreeProvider (method, path, body) {
     const timestamp = Math.floor(Date.now() / 1_000)
 
     const message = method + path + timestamp
@@ -264,7 +259,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     if (!response.ok) {
       const { reason, message } = await response.json()
 
-      throw new Error(`Gasfree provider error (${reason}): ${message}.`)
+      throw new Error(`Gas free provider error (${reason}): ${message}.`)
     }
 
     return response

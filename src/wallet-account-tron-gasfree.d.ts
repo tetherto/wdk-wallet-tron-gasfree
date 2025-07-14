@@ -16,32 +16,29 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     protected _config: TronGasFreeWalletConfig;
     /** @private */
     private _gasFreeAccount;
-    getAddress(): Promise<any>;
     /**
      * Returns the account's balance for the paymaster token defined in the wallet account configuration.
      *
      * @returns {Promise<number>} The paymaster token balance (in base unit).
      */
     getPaymasterTokenBalance(): Promise<number>;
-    sendTransaction(tx: any): Promise<void>;
-    quoteSendTransaction(tx: any): Promise<void>;
     /**
-     * Transfers a token to another address.
+     * Transfers a token to another address, paying gas fees with the transferred token.
      *
      * @param {TransferOptions} options - The transfer's options.
-     * @param {Pick<TronGasFreeWalletConfig, 'paymasterToken' | 'transferMaxFee'>} [config] - If set, overrides the 'paymasterToken' and 'transferMaxFee' options defined in the wallet account configuration.
+     * @param {Object} [config] - A configuration object containing additional options.
+     * @param {number} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
      * @returns {Promise<TransferResult>} The transfer's result.
      */
-    transfer({ token, recipient, amount }: TransferOptions, config?: Pick<TronGasFreeWalletConfig, "paymasterToken" | "transferMaxFee">): Promise<TransferResult>;
+    transfer({ token, recipient, amount }: TransferOptions, config?: { transferMaxFee?: string }): Promise<TransferResult>;
     /**
      * Quotes the costs of a transfer operation.
      *
      * @see {@link transfer}
      * @param {TransferOptions} options - The transfer's options.
-     * @param {Pick<TronGasFreeWalletConfig, 'transferMaxFee'>} [config] - If set, overrides the 'transferMaxFee' option defined in the wallet account configuration.
      * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
      */
-    quoteTransfer(options: TransferOptions, config?: Pick<TronGasFreeWalletConfig, "transferMaxFee">): Promise<Omit<TransferResult, "hash">>;
+    quoteTransfer({ token, recipient, amount }: TransferOptions): Promise<Omit<TransferResult, "hash">>;
     /**
      * Returns a transaction's receipt.
      *
@@ -59,9 +56,9 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     private _sendRequestToGasFreeProvider;
 }
 export type TronWeb = import("@wdk/wallet-tron").default;
-export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
 export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
 export type TransferResult = import("@wdk/wallet-tron").TransferResult;
+export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
 export type TronGasFreeWalletConfig = {
     /**
      * - The blockchain's id.
@@ -91,15 +88,5 @@ export type TronGasFreeWalletConfig = {
      * - The address of the verifying contract.
      */
     verifyingContract: string;
-    /**
-     * - The paymaster token configuration.
-     */
-    paymasterToken: {
-        address: string;
-    };
-    /**
-     * - The maximum fee amount for transfer operations.
-     */
-    transferMaxFee?: number;
 };
 import { WalletAccountTron } from '@wdk/wallet-tron';
