@@ -64,7 +64,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
    * @param {TronGasFreeWalletConfig} [config] - The configuration object.
    */
-  constructor(seed, path, config) {
+  constructor (seed, path, config) {
     super(seed, path, config)
 
     /**
@@ -79,7 +79,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     this._gasFreeAccount = undefined
   }
 
-  async getAddress() {
+  async getAddress () {
     const { gasFreeAddress } = await this._getGasfreeAccount()
 
     return gasFreeAddress
@@ -90,17 +90,17 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    *
    * @returns {Promise<number>} The paymaster token balance (in base unit).
    */
-  async getPaymasterTokenBalance() {
+  async getPaymasterTokenBalance () {
     const { paymasterToken } = this._config
 
     return await this.getTokenBalance(paymasterToken.address)
   }
 
-  async sendTransaction(tx) {
+  async sendTransaction (tx) {
     throw new Error("Method 'sendTransaction(tx)' not supported on tron gasfree.")
   }
 
-  async quoteSendTransaction(tx) {
+  async quoteSendTransaction (tx) {
     throw new Error("Method 'quoteSendTransaction(tx)' not supported on tron gasfree.")
   }
 
@@ -108,20 +108,23 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * Transfers a token to another address.
    *
    * @param {TransferOptions} options - The transfer's options.
+   * @param {Pick<TronGasFreeWalletConfig, 'paymasterToken' | 'transferMaxFee'>} [config] - If set, overrides the 'paymasterToken' and 'transferMaxFee' options defined in the wallet account configuration.
    * @returns {Promise<TransferResult>} The transfer's result.
    */
-  async transfer({ token, recipient, amount }) {
+  async transfer ({ token, recipient, amount }, config) {
+    const { transferMaxFee } = config ?? this._config
+
     const address = await super.getAddress()
 
     const gasFreeAccount = await this._getGasfreeAccount()
 
     const timestamp = Math.floor(Date.now() / 1_000)
 
-    const { fee: feeEstimate } = await this.quoteTransfer({ token, recipient, amount })
+    const { fee: feeEstimate } = await this.quoteTransfer({ token, recipient, amount }, config)
 
     // eslint-disable-next-line eqeqeq
-    if (this._config.transferMaxFee != undefined && feeEstimate >= this._config.transferMaxFee) {
-      throw new Error('Exceeded maximum fee cost for transfer operations.')
+    if (transferMaxFee !== undefined && feeEstimate >= transferMaxFee) {
+      throw new Error('The transfer operation exceeds the transfer max fee.')
     }
 
     const Permit712MessageDomain = {
@@ -137,7 +140,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
       user: address,
       receiver: recipient,
       value: amount,
-      maxFee: maxFee,
+      maxFee: feeEstimate,
       deadline: timestamp + 300,
       version: 1,
       nonce: gasFreeAccount.nonce
@@ -156,7 +159,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
 
     const { data } = await response.json()
 
-    const fee = (data.estimatedTransferFee || 0) + (data.estimatedActivateFee || 0) 
+    const fee = (data.estimatedTransferFee || 0) + (data.estimatedActivateFee || 0)
 
     return { hash: data.id, fee }
   }
@@ -166,12 +169,15 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    *
    * @see {@link transfer}
    * @param {TransferOptions} options - The transfer's options.
+   * @param {Pick<TronGasFreeWalletConfig, 'transferMaxFee'>} [config] - If set, overrides the 'transferMaxFee' option defined in the wallet account configuration.
    * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
    */
-  async quoteTransfer({ token }) {
+  async quoteTransfer (options, config) {
+    const { paymasterToken } = config ?? this._config
+
     const gasFreeAccount = await this._getGasfreeAccount()
-    
-    const { transferFee, activateFee } = gasFreeAccount.assets.find(({ tokenAddress }) => tokenAddress === token)
+
+    const { transferFee, activateFee } = gasFreeAccount.assets.find(({ tokenAddress }) => tokenAddress === paymasterToken.address)
 
     const maxFee = transferFee + (gasFreeAccount.active ? 0 : activateFee)
 
@@ -184,16 +190,16 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * @param {string} hash - The transaction's hash.
    * @returns {Promise<TronTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
    */
-  async getTransactionReceipt(hash) {
+  async getTransactionReceipt (hash) {
     const txHash = await this._getTokenTransferHash(hash)
 
-    return txHash 
-      ? await super.getTransactionReceipt(txHash) 
+    return txHash
+      ? await super.getTransactionReceipt(txHash)
       : null
   }
 
   /** @private */
-  _signTypedData(domain, value) {
+  _signTypedData (domain, value) {
     const messageDigest = this._tronWeb.utils._TypedDataEncoder
       .hash(domain, PERMIT_712_TYPES, value)
       .slice(2)
@@ -208,7 +214,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /** @private */
-  async _getGasfreeAccount() {
+  async _getGasfreeAccount () {
     if (!this._gasFreeAccount) {
       const address = await super.getAddress()
 
@@ -223,8 +229,8 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /** @private */
-  async _getTokenTransferHash(id) {
-    const transfer = await this._sendRequestToGasFreeProvider('GET', `/api/v1/gasfree/${id}`)
+  async _getTokenTransferHash (id) {
+    const response = await this._sendRequestToGasFreeProvider('GET', `/api/v1/gasfree/${id}`)
 
     const { data } = await response.json()
 
@@ -232,7 +238,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /** @private */
-  async _sendRequestToGasFreeProvider(method, path, body = null) {
+  async _sendRequestToGasFreeProvider (method, path, body = null) {
     const timestamp = Math.floor(Date.now() / 1_000)
 
     const message = method + path + timestamp
@@ -244,8 +250,8 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     const url = this._config.gasFreeProvider + path
 
     const headers = {
-      'Timestamp': `${timestamp}`,
-      'Authorization': `ApiKey ${this._config.gasFreeApiKey}:${signature}`,
+      Timestamp: `${timestamp}`,
+      Authorization: `ApiKey ${this._config.gasFreeApiKey}:${signature}`,
       'Content-Type': 'application/json'
     }
 

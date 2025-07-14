@@ -7,29 +7,41 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
      * @param {TronGasFreeWalletConfig} [config] - The configuration object.
      */
     constructor(seed: string | Uint8Array, path: string, config?: TronGasFreeWalletConfig);
+    /**
+     * The tron gasfree wallet account configuration.
+     *
+     * @protected
+     * @type {TronGasFreeWalletConfig}
+     */
+    protected _config: TronGasFreeWalletConfig;
     /** @private */
     private _gasFreeAccount;
+    getAddress(): Promise<any>;
     /**
      * Returns the account's balance for the paymaster token defined in the wallet account configuration.
      *
      * @returns {Promise<number>} The paymaster token balance (in base unit).
      */
     getPaymasterTokenBalance(): Promise<number>;
+    sendTransaction(tx: any): Promise<void>;
+    quoteSendTransaction(tx: any): Promise<void>;
     /**
      * Transfers a token to another address.
      *
      * @param {TransferOptions} options - The transfer's options.
+     * @param {Pick<TronGasFreeWalletConfig, 'paymasterToken' | 'transferMaxFee'>} [config] - If set, overrides the 'paymasterToken' and 'transferMaxFee' options defined in the wallet account configuration.
      * @returns {Promise<TransferResult>} The transfer's result.
      */
-    transfer({ token, recipient, amount }: TransferOptions): Promise<TransferResult>;
+    transfer({ token, recipient, amount }: TransferOptions, config?: Pick<TronGasFreeWalletConfig, "paymasterToken" | "transferMaxFee">): Promise<TransferResult>;
     /**
      * Quotes the costs of a transfer operation.
      *
      * @see {@link transfer}
      * @param {TransferOptions} options - The transfer's options.
+     * @param {Pick<TronGasFreeWalletConfig, 'transferMaxFee'>} [config] - If set, overrides the 'transferMaxFee' option defined in the wallet account configuration.
      * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
      */
-    quoteTransfer({ token }: TransferOptions): Promise<Omit<TransferResult, "hash">>;
+    quoteTransfer(options: TransferOptions, config?: Pick<TronGasFreeWalletConfig, "transferMaxFee">): Promise<Omit<TransferResult, "hash">>;
     /**
      * Returns a transaction's receipt.
      *

@@ -8,6 +8,13 @@ export default class WalletManagerTronGasfree extends WalletManagerTron {
      */
     constructor(seed: string | Uint8Array, config?: TronGasFreeWalletConfig);
     /**
+     * The tron gasfree wallet configuration.
+     *
+     * @protected
+     * @type {TronGasFreeWalletConfig}
+     */
+    protected _config: TronGasFreeWalletConfig;
+    /**
      * Returns the wallet account at a specific index (see [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)).
      *
      * @example
