@@ -1,27 +1,62 @@
-export default class WalletAccountTronGasfree extends WalletAccountTron {
+/** @implements {IWalletAccount} */
+export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronGasfree implements IWalletAccount {
     /**
      * Creates a new tron gasfree wallet account.
      *
      * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
      * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
-     * @param {TronGasFreeWalletConfig} [config] - The configuration object.
+     * @param {TronGasfreeWalletConfig} config - The configuration object.
      */
-    constructor(seed: string | Uint8Array, path: string, config?: TronGasFreeWalletConfig);
+    constructor(seed: string | Uint8Array, path: string, config: TronGasfreeWalletConfig);
     /**
      * The tron gasfree wallet account configuration.
      *
      * @protected
-     * @type {TronGasFreeWalletConfig}
+     * @type {TronGasfreeWalletConfig}
      */
-    protected _config: TronGasFreeWalletConfig;
+    protected _config: TronGasfreeWalletConfig;
     /** @private */
-    private _gasFreeAccount;
+    private _tronAccount;
     /**
-     * Returns the account's balance for the paymaster token defined in the wallet account configuration.
+     * The derivation path's index of this account.
      *
-     * @returns {Promise<number>} The paymaster token balance (in base unit).
+     * @type {number}
      */
-    getPaymasterTokenBalance(): Promise<number>;
+    get index(): number;
+    /**
+     * The derivation path of this account (see [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)).
+     *
+     * @type {string}
+     */
+    get path(): string;
+    /**
+     * The account's key pair.
+     *
+     * @type {KeyPair}
+     */
+    get keyPair(): KeyPair;
+    /**
+     * Signs a message.
+     *
+     * @param {string} message - The message to sign.
+     * @returns {Promise<string>} The message's signature.
+     */
+    sign(message: string): Promise<string>;
+    /**
+     * Verifies a message's signature.
+     *
+     * @param {string} message - The original message.
+     * @param {string} signature - The signature to verify.
+     * @returns {Promise<boolean>} True if the signature is valid.
+     */
+    verify(message: string, signature: string): Promise<boolean>;
+    /**
+     * Sends a transaction.
+     *
+     * @param {TronTransaction} tx - The transaction.
+     * @returns {Promise<TransactionResult>} The transaction's result.
+     */
+    sendTransaction(tx: TronTransaction): Promise<TransactionResult>;
     /**
      * Transfers a token to another address, paying gas fees with the transferred token.
      *
@@ -30,63 +65,20 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
      * @param {number} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
      * @returns {Promise<TransferResult>} The transfer's result.
      */
-    transfer({ token, recipient, amount }: TransferOptions, config?: { transferMaxFee?: string }): Promise<TransferResult>;
+    transfer({ token, recipient, amount }: TransferOptions, config?: { transferMaxFee?: number }): Promise<TransferResult>;
     /**
-     * Quotes the costs of a transfer operation.
-     *
-     * @see {@link transfer}
-     * @param {TransferOptions} options - The transfer's options.
-     * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
+     * Disposes the wallet account, erasing the private key from the memory.
      */
-    quoteTransfer({ token, recipient, amount }: TransferOptions): Promise<Omit<TransferResult, "hash">>;
-    /**
-     * Returns a transaction's receipt.
-     *
-     * @param {string} hash - The transaction's hash.
-     * @returns {Promise<TronTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
-     */
-    getTransactionReceipt(hash: string): Promise<TronTransactionReceipt | null>;
+    dispose(): void;
     /** @private */
     private _signTypedData;
-    /** @private */
-    private _getGasfreeAccount;
-    /** @private */
-    private _getTokenTransferHash;
-    /** @private */
-    private _sendRequestToGasFreeProvider;
 }
-export type TronWeb = import("@wdk/wallet-tron").default;
+export type IWalletAccount = import("@wdk/wallet").IWalletAccount;
+export type KeyPair = import("@wdk/wallet-tron").KeyPair;
+export type TronTransaction = import("@wdk/wallet-tron").TronTransaction;
+export type TransactionResult = import("@wdk/wallet-tron").TransactionResult;
 export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
 export type TransferResult = import("@wdk/wallet-tron").TransferResult;
 export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
-export type TronGasFreeWalletConfig = {
-    /**
-     * - The blockchain's id.
-     */
-    chainId: string;
-    /**
-     * - The url of the tron web provider, or an instance of the {@link TronWeb} class.
-     */
-    provider: string | TronWeb;
-    /**
-     * - The gasfree provider's url.
-     */
-    gasFreeProvider: string;
-    /**
-     * - The gasfree provider's api key.
-     */
-    gasFreeApiKey: string;
-    /**
-     * - The gasfree provider's api secret.
-     */
-    gasFreeApiSecret: string;
-    /**
-     * - The address of the service provider.
-     */
-    serviceProvider: string;
-    /**
-     * - The address of the verifying contract.
-     */
-    verifyingContract: string;
-};
-import { WalletAccountTron } from '@wdk/wallet-tron';
+export type TronGasfreeWalletConfig = import("./wallet-account-read-only-tron-gasfree.js").TronGasfreeWalletConfig;
+import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-gasfree.js';

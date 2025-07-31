@@ -1,4 +1,5 @@
 export { default } from "./src/wallet-manager-tron-gasfree.js";
+export { default as WalletAccountReadOnlyTronGasfree } from "./src/wallet-account-read-only-tron-gasfree.js";
 export { default as WalletAccountTronGasfree } from "./src/wallet-account-tron-gasfree.js";
 export type FeeRates = import("@wdk/wallet-tron").FeeRates;
 export type KeyPair = import("@wdk/wallet-tron").KeyPair;
@@ -7,4 +8,4 @@ export type TransactionResult = import("@wdk/wallet-tron").TransactionResult;
 export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
 export type TransferResult = import("@wdk/wallet-tron").TransferResult;
 export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
-export type TronGasFreeWalletConfig = import("./src/wallet-account-tron-gasfree.js").TronGasFreeWalletConfig;
+export type TronGasfreeWalletConfig = import("./src/wallet-manager-tron-gasfree.js").TronGasfreeWalletConfig;
