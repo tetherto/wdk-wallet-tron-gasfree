@@ -139,9 +139,9 @@ export default class WalletAccountReadOnlyTronGasfree extends AbstractWalletAcco
       : null
   }
 
-  /** 
+  /**
    * Returns the gasfree provider's account.
-   * 
+   *
    * @protected
    * @returns {Promise<any>} The gasfree provider's account.
    */
@@ -157,10 +157,10 @@ export default class WalletAccountReadOnlyTronGasfree extends AbstractWalletAcco
     return this._gasFreeAccount
   }
 
-  /** 
+  /**
    * Sends a http request to the gasfree provider.
-   * 
-   * @protected 
+   *
+   * @protected
    * @param {string} method - The http request's method; available values: 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'.
    * @param {string} path - The http request's url's path.
    * @param {any} [body] - The http request's body.
