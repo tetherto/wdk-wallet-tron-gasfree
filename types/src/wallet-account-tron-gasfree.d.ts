@@ -68,10 +68,10 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     transfer({ token, recipient, amount }: TransferOptions, config?: { transferMaxFee?: number }): Promise<TransferResult>;
 /**
      * Returns a read-only copy of the account.
-     * 
+     *
      * @returns {Promise<WalletAccountReadOnlyTronGasfree>} The read-only account.
      */
-    toReadOnlyAccount(): Promise<WalletAccountReadOnlyTronGasfree>
+    toReadOnlyAccount(): Promise<WalletAccountReadOnlyTronGasfree>;
     /**
      * Disposes the wallet account, erasing the private key from the memory.
      */
