@@ -16,7 +16,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      */
     protected _config: TronGasfreeWalletConfig;
     /** @private */
-    private _tronAccount;
+    private _ownerAccount;
     /**
      * The derivation path's index of this account.
      *
@@ -66,6 +66,12 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * @returns {Promise<TransferResult>} The transfer's result.
      */
     transfer({ token, recipient, amount }: TransferOptions, config?: { transferMaxFee?: number }): Promise<TransferResult>;
+/**
+     * Returns a read-only copy of the account.
+     * 
+     * @returns {Promise<WalletAccountReadOnlyTronGasfree>} The read-only account.
+     */
+    toReadOnlyAccount(): Promise<WalletAccountReadOnlyTronGasfree>
     /**
      * Disposes the wallet account, erasing the private key from the memory.
      */

@@ -14,7 +14,7 @@ export default class WalletAccountReadOnlyTronGasfree extends AbstractWalletAcco
      */
     protected _config: Omit<TronGasfreeWalletConfig, "transferMaxFee">;
     /** @private */
-    private _tronAccountAddress;
+    private _ownerAccountAddress;
     /** @private */
     private _gasFreeAccount;
     /**

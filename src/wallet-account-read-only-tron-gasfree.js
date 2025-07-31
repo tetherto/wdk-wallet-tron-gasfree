@@ -18,6 +18,8 @@ import { createHmac } from 'crypto'
 
 import { AbstractWalletAccountReadOnly } from '@wdk/wallet'
 
+import { WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
+
 /** @typedef {import('tronweb').default } TronWeb */
 
 /** @typedef {import('@wdk/wallet-tron').TronTransaction} TronTransaction */
@@ -58,7 +60,7 @@ export default class WalletAccountReadOnlyTronGasfree extends AbstractWalletAcco
     this._config = config
 
     /** @private */
-    this._tronAccountAddress = address
+    this._ownerAccountAddress = address
 
     /** @private */
     this._gasFreeAccount = undefined
@@ -145,11 +147,9 @@ export default class WalletAccountReadOnlyTronGasfree extends AbstractWalletAcco
    */
   async _getGasfreeAccount () {
     if (!this._gasFreeAccount) {
-      const response = await this._sendRequestToGasfreeProvider('GET', `/api/v1/address/${this._tronAccountAddress}`)
+      const response = await this._sendRequestToGasfreeProvider('GET', `/api/v1/address/${this._ownerAccountAddress}`)
 
       const { data } = await response.json()
-
-      console.log(data)
 
       this._gasFreeAccount = data
     }

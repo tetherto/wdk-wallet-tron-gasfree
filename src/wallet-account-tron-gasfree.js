@@ -63,9 +63,9 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @param {TronGasfreeWalletConfig} config - The configuration object.
    */
   constructor (seed, path, config) {
-    const tronAccount = new WalletAccountTron(seed, path, config)
+    const ownerAccount = new WalletAccountTron(seed, path, config)
 
-    super(tronAccount._address, config)
+    super(ownerAccount._address, config)
 
     /**
      * The tron gasfree wallet account configuration.
@@ -76,7 +76,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     this._config = config
 
     /** @private */
-    this._tronAccount = tronAccount
+    this._ownerAccount = ownerAccount
   }
 
   /**
@@ -85,7 +85,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @type {number}
    */
   get index () {
-    return this._tronAccount.index
+    return this._ownerAccount.index
   }
 
   /**
@@ -94,7 +94,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @type {string}
    */
   get path () {
-    return this._tronAccount.path
+    return this._ownerAccount.path
   }
 
   /**
@@ -103,7 +103,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @type {KeyPair}
    */
   get keyPair () {
-    return this._tronAccount.keyPair
+    return this._ownerAccount.keyPair
   }
 
   /**
@@ -113,7 +113,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @returns {Promise<string>} The message's signature.
    */
   async sign (message) {
-    return await this._tronAccount.sign(message)
+    return await this._ownerAccount.sign(message)
   }
 
   /**
@@ -124,7 +124,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @returns {Promise<boolean>} True if the signature is valid.
    */
   async verify (message, signature) {
-    return await this._tronAccount.verify(message, signature)
+    return await this._ownerAccount.verify(message, signature)
   }
 
   /**
@@ -193,10 +193,23 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
   }
 
   /**
+   * Returns a read-only copy of the account.
+   * 
+   * @returns {Promise<WalletAccountReadOnlyTronGasfree>} The read-only account.
+   */
+  async toReadOnlyAccount () {
+    const address = await this._ownerAccount.getAddress()
+
+    const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(address, this._config)
+
+    return readOnlyAccount
+  }  
+
+  /**
    * Disposes the wallet account, erasing the private key from the memory.
    */
   dispose () {
-    this._tronAccount.dispose()
+    this._ownerAccount.dispose()
   }
 
   /** @private */
