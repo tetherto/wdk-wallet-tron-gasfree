@@ -146,8 +146,6 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @returns {Promise<TransferResult>} The transfer's result.
    */
   async transfer ({ token, recipient, amount }, config = {}) {
-    const address = await super.getAddress()
-
     const gasFreeAccount = await this._getGasfreeAccount()
 
     const { fee: feeEstimate } = await this.quoteTransfer({ token, recipient, amount })
@@ -169,7 +167,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     const message = {
       token,
       serviceProvider: this._config.serviceProvider,
-      user: address,
+      user: gasFreeAccount.accountAddress,
       receiver: recipient,
       value: amount,
       maxFee: feeEstimate,
