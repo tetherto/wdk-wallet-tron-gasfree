@@ -1,4 +1,4 @@
-export default class WalletAccountReadOnlyTronGasfree extends AbstractWalletAccountReadOnly {
+export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadOnly {
     /**
      * Creates a new read-only tron gasfree wallet account.
      *
@@ -113,4 +113,4 @@ export type TronGasfreeWalletConfig = {
      */
     transferMaxFee?: number;
 };
-import { AbstractWalletAccountReadOnly } from '@wdk/wallet';
+import { WalletAccountReadOnly } from '@wdk/wallet';

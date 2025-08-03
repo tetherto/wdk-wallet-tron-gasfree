@@ -1,4 +1,4 @@
-export default class WalletManagerTronGasfree extends AbstractWalletManager {
+export default class WalletManagerTronGasfree extends WalletManager {
     /**
      * Creates a new wallet manager for the tron blockchain that implements gasfree features.
      *
@@ -63,5 +63,5 @@ export default class WalletManagerTronGasfree extends AbstractWalletManager {
 export type FeeRates = import("@wdk/wallet-tron").FeeRates;
 export type TronGasfreeWalletConfig = import("./wallet-account-tron-gasfree.js").TronGasfreeWalletConfig;
 import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js';
-import AbstractWalletManager from '@wdk/wallet';
+import WalletManager from '@wdk/wallet';
 import TronWeb from 'tronweb'

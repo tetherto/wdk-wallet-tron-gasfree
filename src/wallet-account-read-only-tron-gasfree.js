@@ -16,7 +16,7 @@
 
 import { createHmac } from 'crypto'
 
-import { AbstractWalletAccountReadOnly } from '@wdk/wallet'
+import { WalletAccountReadOnly } from '@wdk/wallet'
 
 import { WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
 
@@ -41,7 +41,7 @@ import { WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
  * @property {number} [transferMaxFee] - The maximum fee amount for transfer operations.
  */
 
-export default class WalletAccountReadOnlyTronGasfree extends AbstractWalletAccountReadOnly {
+export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadOnly {
   /**
    * Creates a new read-only tron gasfree wallet account.
    *
