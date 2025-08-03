@@ -1,19 +1,34 @@
-/** @typedef {import('./wallet-account-tron-gasfree.js').TronGasFreeWalletConfig} TronGasFreeWalletConfig */
-export default class WalletManagerTronGasfree extends WalletManagerTron {
+export default class WalletManagerTronGasfree extends WalletManager {
     /**
      * Creates a new wallet manager for the tron blockchain that implements gasfree features.
      *
      * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
-     * @param {TronGasFreeWalletConfig} [config] - The configuration object.
+     * @param {TronGasfreeWalletConfig} [config] - The configuration object.
      */
-    constructor(seed: string | Uint8Array, config?: TronGasFreeWalletConfig);
+    constructor(seed: string | Uint8Array, config?: TronGasfreeWalletConfig);
     /**
      * The tron gasfree wallet configuration.
      *
      * @protected
-     * @type {TronGasFreeWalletConfig}
+     * @type {TronGasfreeWalletConfig}
      */
-    protected _config: TronGasFreeWalletConfig;
+    protected _config: TronGasfreeWalletConfig;
+    /**
+     * A map between derivation paths and wallet accounts. It contains all the wallet accounts that have been accessed through the {@link getAccount} and {@link getAccountByPath} methods.
+     *
+     * @protected
+     * @type {{ [path: string]: WalletAccountTronGasfree }}
+     */
+    protected _accounts: {
+        [path: string]: WalletAccountTronGasfree;
+    };
+    /**
+     * The tron web client.
+     *
+     * @protected
+     * @type {TronWeb | undefined}
+     */
+    protected _tronWeb: TronWeb | undefined;
     /**
      * Returns the wallet account at a specific index (see [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)).
      *
@@ -34,7 +49,19 @@ export default class WalletManagerTronGasfree extends WalletManagerTron {
      * @returns {Promise<WalletAccountTronGasfree>} The account.
      */
     getAccountByPath(path: string): Promise<WalletAccountTronGasfree>;
+    /**
+     * Returns the current fee rates.
+     *
+     * @returns {Promise<FeeRates>} The fee rates.
+     */
+    getFeeRates(): Promise<FeeRates>;
+    /**
+     * Disposes all the wallet accounts, erasing their private keys from the memory.
+     */
+    dispose(): void;
 }
-export type TronGasFreeWalletConfig = import("./wallet-account-tron-gasfree.js").TronGasFreeWalletConfig;
-import WalletManagerTron from '@wdk/wallet-tron';
+export type FeeRates = import("@wdk/wallet-tron").FeeRates;
+export type TronGasfreeWalletConfig = import("./wallet-account-tron-gasfree.js").TronGasfreeWalletConfig;
 import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js';
+import WalletManager from '@wdk/wallet';
+import TronWeb from 'tronweb'

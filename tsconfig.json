@@ -1,8 +1,7 @@
 {
-  "include": [ 
+  "include": [
     "index.js",
-    "src/wallet-manager-tron-gasfree.js",
-    "src/wallet-account-tron-gasfree.js"
+    "src/**/*.js",
   ],
   "compilerOptions": {
     "target": "ES2015",
@@ -11,10 +10,8 @@
     "allowJs": true,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "noResolve": true,
     "skipLibCheck": true,
-    "typeRoots": [
-      "./node_modules/@wdk/"
-    ]
+    "stripInternal": true,
+    "outDir": "./types"
   }
 }

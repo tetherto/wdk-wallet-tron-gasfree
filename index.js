@@ -15,6 +15,7 @@
 'use strict'
 
 /** @typedef {import('@wdk/wallet-tron').FeeRates} FeeRates */
+
 /** @typedef {import('@wdk/wallet-tron').KeyPair} KeyPair */
 /** @typedef {import('@wdk/wallet-tron').TronTransaction} TronTransaction */
 /** @typedef {import('@wdk/wallet-tron').TransactionResult} TransactionResult */
@@ -22,8 +23,10 @@
 /** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
 /** @typedef {import('@wdk/wallet-tron').TronTransactionReceipt} TronTransactionReceipt */
 
-/** @typedef {import('./src/wallet-account-tron-gasfree.js').TronGasFreeWalletConfig} TronGasFreeWalletConfig */
+/** @typedef {import('./src/wallet-manager-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
 
 export { default } from './src/wallet-manager-tron-gasfree.js'
+
+export { default as WalletAccountReadOnlyTronGasfree } from './src/wallet-account-read-only-tron-gasfree.js'
 
 export { default as WalletAccountTronGasfree } from './src/wallet-account-tron-gasfree.js'

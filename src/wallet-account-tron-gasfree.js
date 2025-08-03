@@ -14,28 +14,26 @@
 
 'use strict'
 
-import { createHmac } from 'crypto'
-
 import { WalletAccountTron } from '@wdk/wallet-tron'
 
 import { secp256k1 } from '@noble/curves/secp256k1'
 
-/** @typedef {import('tronweb').default } TronWeb */
+import TronWeb from 'tronweb'
 
+import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-gasfree.js'
+
+/** @typedef {import('@wdk/wallet').IWalletAccount} IWalletAccount */
+
+/** @typedef {import('@wdk/wallet-tron').KeyPair} KeyPair */
+
+/** @typedef {import('@wdk/wallet-tron').TronTransaction} TronTransaction */
+/** @typedef {import('@wdk/wallet-tron').TransactionResult} TransactionResult */
 /** @typedef {import('@wdk/wallet-tron').TransferOptions} TransferOptions */
 /** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
+
 /** @typedef {import('@wdk/wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
 
-/**
- * @typedef {Object} TronGasFreeWalletConfig
- * @property {string} chainId - The blockchain's id.
- * @property {string | TronWeb} provider - The url of the tron web provider, or an instance of the {@link TronWeb} class.
- * @property {string} gasFreeProvider - The gasfree provider's url.
- * @property {string} gasFreeApiKey - The gasfree provider's api key.
- * @property {string} gasFreeApiSecret - The gasfree provider's api secret.
- * @property {string} serviceProvider - The address of the service provider.
- * @property {string} verifyingContract - The address of the verifying contract.
- */
+/** @typedef {import('./wallet-account-read-only-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
 
 const PERMIT_712_TYPES = {
   PermitTransfer: [
@@ -55,52 +53,88 @@ const TOKEN_TRANSFER_DEADLINE = 300
 
 const TOKEN_TRANSFER_SIGNATURE_VERSION = 1
 
-export default class WalletAccountTronGasfree extends WalletAccountTron {
+/** @implements {IWalletAccount} */
+export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronGasfree {
   /**
    * Creates a new tron gasfree wallet account.
    *
    * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
    * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
-   * @param {TronGasFreeWalletConfig} [config] - The configuration object.
+   * @param {TronGasfreeWalletConfig} config - The configuration object.
    */
   constructor (seed, path, config) {
-    super(seed, path, config)
+    const ownerAccount = new WalletAccountTron(seed, path, config)
+
+    super(ownerAccount._address, config)
 
     /**
      * The tron gasfree wallet account configuration.
      *
      * @protected
-     * @type {TronGasFreeWalletConfig}
+     * @type {TronGasfreeWalletConfig}
      */
     this._config = config
 
     /** @private */
-    this._gasFreeAccount = undefined
-  }
-
-  async getAddress () {
-    const { gasFreeAddress } = await this._getGasfreeAccount()
-
-    return gasFreeAddress
+    this._ownerAccount = ownerAccount
   }
 
   /**
-   * Returns the account's balance for the paymaster token defined in the wallet account configuration.
+   * The derivation path's index of this account.
    *
-   * @returns {Promise<number>} The paymaster token balance (in base unit).
+   * @type {number}
    */
-  async getPaymasterTokenBalance () {
-    const { paymasterToken } = this._config
-
-    return await this.getTokenBalance(paymasterToken.address)
+  get index () {
+    return this._ownerAccount.index
   }
 
+  /**
+   * The derivation path of this account (see [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)).
+   *
+   * @type {string}
+   */
+  get path () {
+    return this._ownerAccount.path
+  }
+
+  /**
+   * The account's key pair.
+   *
+   * @type {KeyPair}
+   */
+  get keyPair () {
+    return this._ownerAccount.keyPair
+  }
+
+  /**
+   * Signs a message.
+   *
+   * @param {string} message - The message to sign.
+   * @returns {Promise<string>} The message's signature.
+   */
+  async sign (message) {
+    return await this._ownerAccount.sign(message)
+  }
+
+  /**
+   * Verifies a message's signature.
+   *
+   * @param {string} message - The original message.
+   * @param {string} signature - The signature to verify.
+   * @returns {Promise<boolean>} True if the signature is valid.
+   */
+  async verify (message, signature) {
+    return await this._ownerAccount.verify(message, signature)
+  }
+
+  /**
+   * Sends a transaction.
+   *
+   * @param {TronTransaction} tx - The transaction.
+   * @returns {Promise<TransactionResult>} The transaction's result.
+   */
   async sendTransaction (tx) {
     throw new Error("Method 'sendTransaction(tx)' not supported on tron gasfree.")
-  }
-
-  async quoteSendTransaction (tx) {
-    throw new Error("Method 'quoteSendTransaction(tx)' not supported on tron gasfree.")
   }
 
   /**
@@ -112,7 +146,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
    * @returns {Promise<TransferResult>} The transfer's result.
    */
   async transfer ({ token, recipient, amount }, config = {}) {
-    const address = await super.getAddress()
+    const address = await this._ownerAccount.getAddress()
 
     const gasFreeAccount = await this._getGasfreeAccount()
 
@@ -146,7 +180,7 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
 
     const signature = this._signTypedData(Permit712MessageDomain, message)
 
-    const response = await this._sendRequestToGasFreeProvider('POST', '/api/v1/gasfree/submit', {
+    const response = await this._sendRequestToGasfreeProvider('POST', '/api/v1/gasfree/submit', {
       ...message,
       sig: signature.slice(2)
     })
@@ -159,43 +193,28 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
   }
 
   /**
-   * Quotes the costs of a transfer operation.
+   * Returns a read-only copy of the account.
    *
-   * @see {@link transfer}
-   * @param {TransferOptions} options - The transfer's options.
-   * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
+   * @returns {Promise<WalletAccountReadOnlyTronGasfree>} The read-only account.
    */
-  async quoteTransfer ({ token, recipient, amount }) {
-    const gasFreeAccount = await this._getGasfreeAccount()
+  async toReadOnlyAccount () {
+    const address = await this._ownerAccount.getAddress()
 
-    const response = await this._sendRequestToGasFreeProvider('GET', '/api/v1/config/token/all')
+    const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(address, this._config)
 
-    const { data } = await response.json()
-
-    const paymasterToken = data.tokens.find(({ tokenAddress }) => tokenAddress === token)
-
-    const fee = paymasterToken.transferFee + (+gasFreeAccount.active * paymasterToken.activateFee)
-
-    return { fee }
+    return readOnlyAccount
   }
 
   /**
-   * Returns a transaction's receipt.
-   *
-   * @param {string} hash - The transaction's hash.
-   * @returns {Promise<TronTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
+   * Disposes the wallet account, erasing the private key from the memory.
    */
-  async getTransactionReceipt (hash) {
-    const txHash = await this._getTokenTransferHash(hash)
-
-    return txHash
-      ? await super.getTransactionReceipt(txHash)
-      : null
+  dispose () {
+    this._ownerAccount.dispose()
   }
 
   /** @private */
   _signTypedData (domain, value) {
-    const messageDigest = this._tronWeb.utils._TypedDataEncoder
+    const messageDigest = TronWeb.utils._TypedDataEncoder
       .hash(domain, PERMIT_712_TYPES, value)
       .slice(2)
 
@@ -206,62 +225,5 @@ export default class WalletAccountTronGasfree extends WalletAccountTron {
     const v = (signature.recovery + 27).toString(16).padStart(2, '0')
 
     return '0x' + r + s + v
-  }
-
-  /** @private */
-  async _getGasfreeAccount () {
-    if (!this._gasFreeAccount) {
-      const address = await super.getAddress()
-
-      const response = await this._sendRequestToGasFreeProvider('GET', `/api/v1/address/${address}`)
-
-      const { data } = await response.json()
-
-      this._gasFreeAccount = data
-    }
-
-    return this._gasFreeAccount
-  }
-
-  /** @private */
-  async _getTokenTransferHash (id) {
-    const response = await this._sendRequestToGasFreeProvider('GET', `/api/v1/gasfree/${id}`)
-
-    const { data } = await response.json()
-
-    return data?.txnHash
-  }
-
-  /** @private */
-  async _sendRequestToGasFreeProvider (method, path, body) {
-    const timestamp = Math.floor(Date.now() / 1_000)
-
-    const message = method + path + timestamp
-
-    const signature = createHmac('sha256', this._config.gasFreeApiSecret)
-      .update(message)
-      .digest('base64')
-
-    const url = this._config.gasFreeProvider + path
-
-    const headers = {
-      Timestamp: `${timestamp}`,
-      Authorization: `ApiKey ${this._config.gasFreeApiKey}:${signature}`,
-      'Content-Type': 'application/json'
-    }
-
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : null
-    })
-
-    if (!response.ok) {
-      const { reason, message } = await response.json()
-
-      throw new Error(`Gas free provider error (${reason}): ${message}.`)
-    }
-
-    return response
   }
 }

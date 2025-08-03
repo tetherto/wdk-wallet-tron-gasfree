@@ -14,18 +14,26 @@
 
 'use strict'
 
-import WalletManagerTron from '@wdk/wallet-tron'
+import WalletManager from '@wdk/wallet'
+
+import TronWeb from 'tronweb'
 
 import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js'
 
-/** @typedef {import('./wallet-account-tron-gasfree.js').TronGasFreeWalletConfig} TronGasFreeWalletConfig */
+/** @typedef {import('@wdk/wallet-tron').FeeRates} FeeRates */
 
-export default class WalletManagerTronGasfree extends WalletManagerTron {
+/** @typedef {import('./wallet-account-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
+
+const FEE_RATE_NORMAL_MULTIPLIER = 1.1
+
+const FEE_RATE_FAST_MULTIPLIER = 2.0
+
+export default class WalletManagerTronGasfree extends WalletManager {
   /**
    * Creates a new wallet manager for the tron blockchain that implements gasfree features.
    *
    * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
-   * @param {TronGasFreeWalletConfig} [config] - The configuration object.
+   * @param {TronGasfreeWalletConfig} config - The configuration object.
    */
   constructor (seed, config) {
     super(seed, config)
@@ -34,9 +42,31 @@ export default class WalletManagerTronGasfree extends WalletManagerTron {
      * The tron gasfree wallet configuration.
      *
      * @protected
-     * @type {TronGasFreeWalletConfig}
+     * @type {TronGasfreeWalletConfig}
      */
     this._config = config
+
+    /**
+     * A map between derivation paths and wallet accounts. It contains all the wallet accounts that have been accessed through the {@link getAccount} and {@link getAccountByPath} methods.
+     *
+     * @protected
+     * @type {{ [path: string]: WalletAccountTronGasfree }}
+     */
+    this._accounts = {}
+
+    const { provider } = config
+
+    if (provider) {
+      /**
+       * The tron web client.
+       *
+       * @protected
+       * @type {TronWeb | undefined}
+       */
+      this._tronWeb = typeof provider === 'string'
+        ? new TronWeb({ fullHost: provider })
+        : provider
+    }
   }
 
   /**
@@ -69,5 +99,38 @@ export default class WalletManagerTronGasfree extends WalletManagerTron {
     }
 
     return this._accounts[path]
+  }
+
+  /**
+   * Returns the current fee rates.
+   *
+   * @returns {Promise<FeeRates>} The fee rates (in suns).
+   */
+  async getFeeRates () {
+    if (!this._tronWeb) {
+      throw new Error('The wallet must be connected to tron web to get fee rates.')
+    }
+
+    const chainParameters = await this._tronWeb.trx.getChainParameters()
+
+    const getTransactionFee = chainParameters.find(({ key }) => key === 'getTransactionFee')
+
+    const fee = Number(getTransactionFee.value)
+
+    return {
+      normal: Math.round(fee * FEE_RATE_NORMAL_MULTIPLIER),
+      fast: fee * FEE_RATE_FAST_MULTIPLIER
+    }
+  }
+
+  /**
+   * Disposes all the wallet accounts, erasing their private keys from the memory.
+   */
+  dispose () {
+    for (const account of Object.values(this._accounts)) {
+      account.dispose()
+    }
+
+    this._accounts = { }
   }
 }
