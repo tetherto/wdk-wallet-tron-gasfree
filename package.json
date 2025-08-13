@@ -16,7 +16,7 @@
     "@noble/secp256k1": "2.3.0",
     "@wdk/wallet": "https://github.com/tetherto/wdk-wallet.git#develop",
     "@wdk/wallet-tron": "https://github.com/tetherto/wdk-wallet-tron.git#develop",
-    "bare-wdk-runtime": "^2.0.0",
+    "bare-wdk-runtime": "2.0.0",
     "tronweb": "5.3.4"
   },
   "devDependencies": {
@@ -27,11 +27,9 @@
   "exports": {
     ".": {
       "bare": "./bare.js",
-      "import": "./index.js",
-      "types": "./types/index.d.ts"
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
     },
-    "./package": {
-      "default": "./package.json"
-    }
+    "./package": "./package.json"
   }
 }
