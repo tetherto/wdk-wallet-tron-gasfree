@@ -10,16 +10,6 @@
     "lint": "standard",
     "lint:fix": "standard --fix --env jest"
   },
-  "exports": {
-    ".": {
-      "types": "./types/index.d.ts",
-      "bare": "./bare.js",
-      "default": "./index.js"
-    },
-    "./package": {
-      "default": "./package.json"
-    }
-  },
   "dependencies": {
     "@noble/curves": "1.9.2",
     "@noble/hashes": "1.8.0",
@@ -33,5 +23,15 @@
     "rimraf": "6.0.1",
     "standard": "17.1.2",
     "typescript": "5.8.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "bare": "./bare.js",
+      "default": "./index.js"
+    },
+    "./package": {
+      "default": "./package.json"
+    }
   }
 }
