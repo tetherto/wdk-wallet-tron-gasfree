@@ -20,16 +20,16 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     /**
      * Returns the account's tronix balance.
      *
-     * @returns {Promise<number>} The tronix balance (in suns).
+     * @returns {Promise<bigint>} The tronix balance (in suns).
      */
-    getBalance(): Promise<number>;
+    getBalance(): Promise<bigint>;
     /**
      * Returns the account balance for a specific token.
      *
      * @param {string} tokenAddress - The smart contract address of the token.
-     * @returns {Promise<number>} The token balance (in base unit).
+     * @returns {Promise<bigint>} The token balance (in base unit).
      */
-    getTokenBalance(tokenAddress: string): Promise<number>;
+    getTokenBalance(tokenAddress: string): Promise<bigint>;
     /**
      * Quotes the costs of a send transaction operation.
      *
@@ -83,7 +83,7 @@ export type TronGasfreeWalletConfig = {
     /**
      * - The blockchain's id.
      */
-    chainId: string;
+    chainId: number;
     /**
      * - The url of the tron web provider, or an instance of the {@link TronWeb} class.
      */
@@ -111,6 +111,6 @@ export type TronGasfreeWalletConfig = {
     /**
      * - The maximum fee amount for transfer operations.
      */
-    transferMaxFee?: number;
+    transferMaxFee?: number | bigint;
 };
 import { WalletAccountReadOnly } from '@wdk/wallet';

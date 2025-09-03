@@ -16,6 +16,8 @@
 
 import WalletManager from '@wdk/wallet'
 
+import WalletManagerTron from '@wdk/wallet-tron'
+
 import TronWeb from 'tronweb'
 
 import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js'
@@ -23,10 +25,6 @@ import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js'
 /** @typedef {import('@wdk/wallet-tron').FeeRates} FeeRates */
 
 /** @typedef {import('./wallet-account-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
-
-const FEE_RATE_NORMAL_MULTIPLIER = 1.1
-
-const FEE_RATE_FAST_MULTIPLIER = 2.0
 
 export default class WalletManagerTronGasfree extends WalletManager {
   /**
@@ -45,14 +43,6 @@ export default class WalletManagerTronGasfree extends WalletManager {
      * @type {TronGasfreeWalletConfig}
      */
     this._config = config
-
-    /**
-     * A map between derivation paths and wallet accounts. It contains all the wallet accounts that have been accessed through the {@link getAccount} and {@link getAccountByPath} methods.
-     *
-     * @protected
-     * @type {{ [path: string]: WalletAccountTronGasfree }}
-     */
-    this._accounts = {}
 
     const { provider } = config
 
@@ -112,25 +102,12 @@ export default class WalletManagerTronGasfree extends WalletManager {
     }
 
     const chainParameters = await this._tronWeb.trx.getChainParameters()
-
     const getTransactionFee = chainParameters.find(({ key }) => key === 'getTransactionFee')
-
-    const fee = Number(getTransactionFee.value)
+    const fee = BigInt(getTransactionFee.value)
 
     return {
-      normal: Math.round(fee * FEE_RATE_NORMAL_MULTIPLIER),
-      fast: fee * FEE_RATE_FAST_MULTIPLIER
+      normal: fee * WalletManagerTron._FEE_RATE_NORMAL_MULTIPLIER / 100n,
+      fast: fee * WalletManagerTron._FEE_RATE_FAST_MULTIPLIER / 100n
     }
-  }
-
-  /**
-   * Disposes all the wallet accounts, erasing their private keys from the memory.
-   */
-  dispose () {
-    for (const account of Object.values(this._accounts)) {
-      account.dispose()
-    }
-
-    this._accounts = { }
   }
 }

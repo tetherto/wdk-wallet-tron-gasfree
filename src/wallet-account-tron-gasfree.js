@@ -142,7 +142,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    *
    * @param {TransferOptions} options - The transfer's options.
    * @param {Object} [config] - A configuration object containing additional options.
-   * @param {number} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
+   * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
    * @returns {Promise<TransferResult>} The transfer's result.
    */
   async transfer ({ token, recipient, amount }, config = {}) {
@@ -152,7 +152,6 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
 
     const { fee: feeEstimate } = await this.quoteTransfer({ token, recipient, amount })
 
-    // eslint-disable-next-line eqeqeq
     if (config.transferMaxFee !== undefined && feeEstimate >= config.transferMaxFee) {
       throw new Error('The transfer operation exceeds the transfer max fee.')
     }
@@ -162,7 +161,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     const Permit712MessageDomain = {
       name: 'GasFreeController',
       version: 'V1.0.0',
-      chainId: this._config.chainId,
+      chainId: `${this._config.chainId}`,
       verifyingContract: this._config.verifyingContract
     }
 
@@ -189,7 +188,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
 
     const fee = data.estimatedTransferFee + data.estimatedActivateFee
 
-    return { hash: data.id, fee }
+    return { hash: data.id, fee: BigInt(fee) }
   }
 
   /**
