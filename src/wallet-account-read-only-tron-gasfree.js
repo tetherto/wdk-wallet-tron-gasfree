@@ -31,14 +31,14 @@ import { WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
 
 /**
  * @typedef {Object} TronGasfreeWalletConfig
- * @property {string} chainId - The blockchain's id.
+ * @property {number} chainId - The blockchain's id.
  * @property {string | TronWeb} provider - The url of the tron web provider, or an instance of the {@link TronWeb} class.
  * @property {string} gasFreeProvider - The gasfree provider's url.
  * @property {string} gasFreeApiKey - The gasfree provider's api key.
  * @property {string} gasFreeApiSecret - The gasfree provider's api secret.
  * @property {string} serviceProvider - The address of the service provider.
  * @property {string} verifyingContract - The address of the verifying contract.
- * @property {number} [transferMaxFee] - The maximum fee amount for transfer operations.
+ * @property {number | bigint} [transferMaxFee] - The maximum fee amount for transfer operations.
  */
 
 export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadOnly {
@@ -75,7 +75,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   /**
    * Returns the account's tronix balance.
    *
-   * @returns {Promise<number>} The tronix balance (in suns).
+   * @returns {Promise<bigint>} The tronix balance (in suns).
    */
   async getBalance () {
     const tronReadOnlyAccount = await this._getTronReadOnlyAccount()
@@ -87,7 +87,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * Returns the account balance for a specific token.
    *
    * @param {string} tokenAddress - The smart contract address of the token.
-   * @returns {Promise<number>} The token balance (in base unit).
+   * @returns {Promise<bigint>} The token balance (in base unit).
    */
   async getTokenBalance (tokenAddress) {
     const tronReadOnlyAccount = await this._getTronReadOnlyAccount()
@@ -120,7 +120,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     const paymasterToken = data.tokens.find(({ tokenAddress }) => tokenAddress === token)
     const fee = paymasterToken.transferFee + (+gasFreeAccount.active * paymasterToken.activateFee)
 
-    return { fee }
+    return { fee: BigInt(fee) }
   }
 
   /**
