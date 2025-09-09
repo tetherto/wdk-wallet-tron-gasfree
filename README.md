@@ -13,7 +13,6 @@ For detailed documentation about the complete WDK ecosystem, visit [docs.wallet.
 ## 🌟 Features
 
 - **Gas-Free Transactions**: Support for gas-free transactions using TRC20 tokens
-- **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
 - **Tron Derivation Paths**: Support for BIP-44 standard derivation paths for Tron
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
 - **TRC20 Support**: Query native TRX and TRC20 token balances using smart contract interactions
@@ -273,6 +272,63 @@ const wallet = new WalletManagerTronGasfree(seedPhrase, {
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
+##### `getAccount(index)`
+Returns a gas-free Tron wallet account at the specified index using BIP-44 derivation path m/44'/195'.
+
+**Parameters:**
+- `index` (number, optional): The index of the account to get (default: 0)
+
+**Returns:** `Promise<WalletAccountTronGasfree>` - The gas-free Tron wallet account
+
+**Example:**
+```javascript
+const account = await wallet.getAccount(0)
+const address = await account.getAddress()
+console.log('Gas-free Tron account address:', address)
+```
+
+##### `getAccountByPath(path)`
+Returns a gas-free Tron wallet account at the specified BIP-44 derivation path.
+
+**Parameters:**
+- `path` (string): The derivation path (e.g., "0'/0/0", "1'/0/5")
+
+**Returns:** `Promise<WalletAccountTronGasfree>` - The gas-free Tron wallet account
+
+**Example:**
+```javascript
+const account = await wallet.getAccountByPath("0'/0/1")
+const address = await account.getAddress()
+console.log('Custom path gas-free address:', address)
+```
+
+##### `getFeeRates()`
+Returns current fee rates for Tron transactions (used by service provider for gas-free operations).
+
+**Returns:** `Promise<{normal: bigint, fast: bigint}>` - Object containing fee rates in sun
+- `normal`: Standard fee rate for normal confirmation speed
+- `fast`: Higher fee rate for faster confirmation
+
+**Example:**
+```javascript
+const feeRates = await wallet.getFeeRates()
+console.log('Normal fee rate:', feeRates.normal, 'sun')
+console.log('Fast fee rate:', feeRates.fast, 'sun')
+
+// Note: These fees are typically covered by the service provider in gas-free transactions
+```
+
+##### `dispose()`
+Disposes all gas-free Tron wallet accounts and clears sensitive data from memory.
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+wallet.dispose()
+// All gas-free accounts and private keys are now securely wiped from memory
+```
+
 ### WalletAccountTronGasfree
 
 Represents an individual wallet account with gas-free features. Implements `IWalletAccount` from `@wdk/wallet`.
@@ -309,8 +365,48 @@ new WalletAccountTronGasfree(seed, path, config)
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
+##### `getAddress()`
+Returns the account's Tron address.
+
+**Returns:** `Promise<string>` - The Tron address
+
+**Example:**
+```javascript
+const address = await account.getAddress()
+console.log('Gas-free Tron address:', address) // TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH
+```
+
+##### `sign(message)`
+Signs a message using the account's private key.
+
+**Parameters:**
+- `message` (string): Message to sign
+
+**Returns:** `Promise<string>` - Signature as hex string
+
+**Example:**
+```javascript
+const signature = await account.sign('Hello Tron Gas-Free!')
+console.log('Signature:', signature)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature using the account's public key.
+
+**Parameters:**
+- `message` (string): Original message
+- `signature` (string): Signature as hex string
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await account.verify('Hello Tron Gas-Free!', signature)
+console.log('Signature valid:', isValid)
+```
+
 ##### `transfer(options, config?)`
-Transfers TRC20 tokens to another address using gas-free operations.
+Transfers TRC20 tokens to another address using gas-free operations where the service provider covers transaction fees.
 
 **Parameters:**
 - `options` (object): Transfer options
@@ -320,7 +416,77 @@ Transfers TRC20 tokens to another address using gas-free operations.
 - `config` (object, optional): Additional configuration
   - `transferMaxFee` (number | bigint, optional): Maximum allowed fee for this transfer
 
-**Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing hash and fee (in sun)
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing hash and fee (typically 0 or covered by service provider)
+
+**Example:**
+```javascript
+const result = await account.transfer({
+  token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDT TRC20
+  recipient: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
+  amount: 1000000n // 1 USDT (6 decimals)
+})
+console.log('Gas-free transfer hash:', result.hash)
+console.log('Fee (covered by service provider):', result.fee, 'sun')
+```
+
+##### `quoteTransfer(options)`
+Estimates the fee for a TRC20 token transfer (typically covered by service provider in gas-free operations).
+
+**Parameters:**
+- `options` (object): Transfer options
+  - `token` (string): TRC20 contract address
+  - `recipient` (string): Recipient Tron address
+  - `amount` (number | bigint): Amount in TRC20's base units
+
+**Returns:** `Promise<{fee: bigint}>` - Object containing estimated fee (typically 0 or covered by service provider)
+
+**Example:**
+```javascript
+const quote = await account.quoteTransfer({
+  token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDT TRC20
+  recipient: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
+  amount: 1000000n // 1 USDT (6 decimals)
+})
+console.log('Estimated fee (service provider will cover):', quote.fee, 'sun')
+```
+
+##### `getBalance()`
+Returns the account's native TRX balance in sun.
+
+**Returns:** `Promise<bigint>` - Balance in sun
+
+**Example:**
+```javascript
+const balance = await account.getBalance()
+console.log('TRX balance:', balance, 'sun')
+console.log('Balance in TRX:', Number(balance) / 1e6)
+```
+
+##### `getTokenBalance(tokenAddress)`
+Returns the balance of a specific TRC20 token.
+
+**Parameters:**
+- `tokenAddress` (string): The TRC20 token contract address
+
+**Returns:** `Promise<bigint>` - Token balance in token's smallest unit
+
+**Example:**
+```javascript
+// Get USDT TRC20 balance (6 decimals)
+const usdtBalance = await account.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+console.log('USDT balance:', Number(usdtBalance) / 1e6)
+```
+
+##### `dispose()`
+Disposes the wallet account, securely erasing the private key from memory.
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+account.dispose()
+// Private key is now securely wiped from memory
+```
 
 #### Properties
 
@@ -359,6 +525,55 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: bigint}>` |
+
+##### `getBalance()`
+Returns the account's native TRX balance in sun.
+
+**Returns:** `Promise<bigint>` - Balance in sun
+
+**Example:**
+```javascript
+const balance = await readOnlyAccount.getBalance()
+console.log('TRX balance:', balance, 'sun')
+console.log('Balance in TRX:', Number(balance) / 1e6)
+```
+
+##### `getTokenBalance(tokenAddress)`
+Returns the balance of a specific TRC20 token.
+
+**Parameters:**
+- `tokenAddress` (string): The TRC20 token contract address
+
+**Returns:** `Promise<bigint>` - Token balance in token's smallest unit
+
+**Example:**
+```javascript
+// Get USDT TRC20 balance (6 decimals)
+const usdtBalance = await readOnlyAccount.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+console.log('USDT balance:', Number(usdtBalance) / 1e6)
+```
+
+##### `quoteTransfer(options)`
+Estimates the fee for a TRC20 token transfer (typically covered by service provider in gas-free operations).
+
+**Parameters:**
+- `options` (object): Transfer options
+  - `token` (string): TRC20 contract address
+  - `recipient` (string): Recipient Tron address
+  - `amount` (number | bigint): Amount in TRC20's base units
+
+**Returns:** `Promise<{fee: bigint}>` - Object containing estimated fee (typically 0 or covered by service provider)
+
+**Example:**
+```javascript
+const quote = await readOnlyAccount.quoteTransfer({
+  token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDT TRC20
+  recipient: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
+  amount: 1000000n // 1 USDT (6 decimals)
+})
+console.log('Estimated fee (service provider will cover):', quote.fee, 'sun')
+console.log('Estimated fee in TRX:', Number(quote.fee) / 1e6)
+```
 
 ## 🌐 Supported Networks
 
