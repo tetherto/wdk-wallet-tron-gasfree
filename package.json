@@ -23,7 +23,7 @@
     "@noble/secp256k1": "2.3.0",
     "@wdk/wallet": "https://github.com/davi0kprogramsthings/wdk-wallet.git#develop",
     "@wdk/wallet-tron": "https://github.com/davi0kprogramsthings/wdk-wallet-tron.git#develop",
-    "bare-wdk-runtime": "2.0.0",
+    "bare-node-runtime": "1.0.3",
     "tronweb": "5.3.4"
   },
   "devDependencies": {
