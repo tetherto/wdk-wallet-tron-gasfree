@@ -1,4 +1,4 @@
-# @wdk/wallet-tron-gasfree
+# @tetherto/wdk-wallet-tron-gasfree
 
 **Note**: This package is currently in beta. Please test thoroughly in development environments before using in production.
 
@@ -20,17 +20,17 @@ For detailed documentation about the complete WDK ecosystem, visit [docs.wallet.
 
 ## ⬇️ Installation
 
-To install the `@wdk/wallet-tron-gasfree` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-tron-gasfree` package, follow these instructions:
 
 You can install it using npm:
 
 ```bash
-npm install @wdk/wallet-tron-gasfree
+npm install @tetherto/wdk-wallet-tron-gasfree
 ```
 
 ## 🚀 Quick Start
 
-### Importing from `@wdk/wallet-tron-gasfree`
+### Importing from `@tetherto/wdk-wallet-tron-gasfree`
 
 ### Creating a New Gas-Free Wallet
 
@@ -38,7 +38,7 @@ npm install @wdk/wallet-tron-gasfree
 import WalletManagerTronGasfree, { 
   WalletAccountTronGasfree, 
   WalletAccountReadOnlyTronGasfree 
-} from '@wdk/wallet-tron-gasfree'
+} from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'test only example nut use this real life secret phrase must random'
@@ -69,7 +69,7 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerTronGasfree from '@wdk/wallet-tron-gasfree'
+import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Assume wallet is already created
 // Get the first account (index 0)
@@ -99,7 +99,7 @@ console.log('Custom account address:', customAddress)
 For accounts where you have the seed phrase and full access:
 
 ```javascript
-import WalletManagerTronGasfree from '@wdk/wallet-tron-gasfree'
+import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Assume wallet and account are already created
 // Get native TRX balance (in sun)
@@ -120,7 +120,7 @@ console.log('TRC20 token balance:', tokenBalance);
 For addresses where you don't have the seed phrase:
 
 ```javascript
-import { WalletAccountReadOnlyTronGasfree } from '@wdk/wallet-tron-gasfree'
+import { WalletAccountReadOnlyTronGasfree } from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Create a read-only account
 const readOnlyAccount = new WalletAccountReadOnlyTronGasfree('T...', { // Tron address
@@ -222,14 +222,14 @@ wallet.dispose()
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerTronGasfree](#walletmanagertrongasfree) | Main class for managing Tron wallets with gas-free features. Extends `WalletManager` from `@wdk/wallet`. | [Constructor](#constructor), [Methods](#methods) |
-| [WalletAccountTronGasfree](#walletaccounttrongasfree) | Individual Tron wallet account implementation with gas-free features. Extends `WalletAccountReadOnlyTronGasfree` and implements `IWalletAccount` from `@wdk/wallet`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
-| [WalletAccountReadOnlyTronGasfree](#walletaccountreadonlytrongasfree) | Read-only Tron wallet account with gas-free features. Extends `WalletAccountReadOnly` from `@wdk/wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
+| [WalletManagerTronGasfree](#walletmanagertrongasfree) | Main class for managing Tron wallets with gas-free features. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletAccountTronGasfree](#walletaccounttrongasfree) | Individual Tron wallet account implementation with gas-free features. Extends `WalletAccountReadOnlyTronGasfree` and implements `IWalletAccount` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
+| [WalletAccountReadOnlyTronGasfree](#walletaccountreadonlytrongasfree) | Read-only Tron wallet account with gas-free features. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 ### WalletManagerTronGasfree
 
 The main class for managing Tron wallets with gas-free features.  
-Extends `WalletManager` from `@wdk/wallet`.
+Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 #### Constructor
 
@@ -331,7 +331,7 @@ wallet.dispose()
 
 ### WalletAccountTronGasfree
 
-Represents an individual wallet account with gas-free features. Implements `IWalletAccount` from `@wdk/wallet`.
+Represents an individual wallet account with gas-free features. Implements `IWalletAccount` from `@tetherto/wdk-wallet`.
 
 #### Constructor
 

@@ -74,11 +74,11 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     private _getTokenTransferHash;
 }
 export type TronWeb = import("tronweb").default;
-export type TronTransaction = import("@wdk/wallet-tron").TronTransaction;
-export type TransactionResult = import("@wdk/wallet-tron").TransactionResult;
-export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
-export type TransferResult = import("@wdk/wallet-tron").TransferResult;
-export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
+export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransaction;
+export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionResult;
+export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
+export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
+export type TronTransactionReceipt = import("@tetherto/wdk-wallet-tron").TronTransactionReceipt;
 export type TronGasfreeWalletConfig = {
     /**
      * - The blockchain's id.
@@ -113,4 +113,4 @@ export type TronGasfreeWalletConfig = {
      */
     transferMaxFee?: number | bigint;
 };
-import { WalletAccountReadOnly } from '@wdk/wallet';
+import { WalletAccountReadOnly } from '@tetherto/wdk-wallet';

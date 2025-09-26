@@ -14,14 +14,14 @@
 
 'use strict'
 
-/** @typedef {import('@wdk/wallet-tron').FeeRates} FeeRates */
+/** @typedef {import('@tetherto/wdk-wallet-tron').FeeRates} FeeRates */
 
-/** @typedef {import('@wdk/wallet-tron').KeyPair} KeyPair */
-/** @typedef {import('@wdk/wallet-tron').TronTransaction} TronTransaction */
-/** @typedef {import('@wdk/wallet-tron').TransactionResult} TransactionResult */
-/** @typedef {import('@wdk/wallet-tron').TransferOptions} TransferOptions */
-/** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
-/** @typedef {import('@wdk/wallet-tron').TronTransactionReceipt} TronTransactionReceipt */
+/** @typedef {import('@tetherto/wdk-wallet-tron').KeyPair} KeyPair */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransactionResult} TransactionResult */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransferOptions} TransferOptions */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionReceipt} TronTransactionReceipt */
 
 /** @typedef {import('./src/wallet-manager-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
 

@@ -14,7 +14,7 @@
 
 'use strict'
 
-import { WalletAccountTron } from '@wdk/wallet-tron'
+import { WalletAccountTron } from '@tetherto/wdk-wallet-tron'
 
 import { secp256k1 } from '@noble/curves/secp256k1'
 
@@ -22,16 +22,16 @@ import TronWeb from 'tronweb'
 
 import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-gasfree.js'
 
-/** @typedef {import('@wdk/wallet').IWalletAccount} IWalletAccount */
+/** @typedef {import('@tetherto/wdk-wallet').IWalletAccount} IWalletAccount */
 
-/** @typedef {import('@wdk/wallet-tron').KeyPair} KeyPair */
+/** @typedef {import('@tetherto/wdk-wallet-tron').KeyPair} KeyPair */
 
-/** @typedef {import('@wdk/wallet-tron').TronTransaction} TronTransaction */
-/** @typedef {import('@wdk/wallet-tron').TransactionResult} TransactionResult */
-/** @typedef {import('@wdk/wallet-tron').TransferOptions} TransferOptions */
-/** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransactionResult} TransactionResult */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransferOptions} TransferOptions */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
 
-/** @typedef {import('@wdk/wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
 
 /** @typedef {import('./wallet-account-read-only-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
 

@@ -1,11 +1,11 @@
 export { default } from "./src/wallet-manager-tron-gasfree.js";
 export { default as WalletAccountReadOnlyTronGasfree } from "./src/wallet-account-read-only-tron-gasfree.js";
 export { default as WalletAccountTronGasfree } from "./src/wallet-account-tron-gasfree.js";
-export type FeeRates = import("@wdk/wallet-tron").FeeRates;
-export type KeyPair = import("@wdk/wallet-tron").KeyPair;
-export type TronTransaction = import("@wdk/wallet-tron").TronTransaction;
-export type TransactionResult = import("@wdk/wallet-tron").TransactionResult;
-export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
-export type TransferResult = import("@wdk/wallet-tron").TransferResult;
-export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
+export type FeeRates = import("@tetherto/wdk-wallet-tron").FeeRates;
+export type KeyPair = import("@tetherto/wdk-wallet-tron").KeyPair;
+export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransaction;
+export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionResult;
+export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
+export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
+export type TronTransactionReceipt = import("@tetherto/wdk-wallet-tron").TronTransactionReceipt;
 export type TronGasfreeWalletConfig = import("./src/wallet-manager-tron-gasfree.js").TronGasfreeWalletConfig;
