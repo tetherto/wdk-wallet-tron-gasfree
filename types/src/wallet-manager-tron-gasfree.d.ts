@@ -47,8 +47,8 @@ export default class WalletManagerTronGasfree extends WalletManager {
      */
     getFeeRates(): Promise<FeeRates>;
 }
-export type FeeRates = import("@wdk/wallet-tron").FeeRates;
+export type FeeRates = import("@tetherto/wdk-wallet-tron").FeeRates;
 export type TronGasfreeWalletConfig = import("./wallet-account-tron-gasfree.js").TronGasfreeWalletConfig;
 import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js';
-import WalletManager from '@wdk/wallet';
+import WalletManager from '@tetherto/wdk-wallet';
 import TronWeb from 'tronweb'
