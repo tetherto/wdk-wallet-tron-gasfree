@@ -2,7 +2,13 @@
   "name": "@wdk/wallet-tron-gasfree",
   "version": "1.0.0-beta.1",
   "description": "A simple package to manage BIP-32 wallets for the tron blockchain with gasfree features.",
-  "keywords": ["wdk", "wallet", "bip-32", "tron", "gasfree"],
+  "keywords": [
+    "wdk",
+    "wallet",
+    "bip-32",
+    "tron",
+    "gasfree"
+  ],
   "author": "Tether",
   "license": "Apache-2.0",
   "repository": {
@@ -29,6 +35,9 @@
   "devDependencies": {
     "standard": "17.1.2",
     "typescript": "5.8.3"
+  },
+  "overrides": {
+    "axios": "1.12.2"
   },
   "exports": {
     ".": {
