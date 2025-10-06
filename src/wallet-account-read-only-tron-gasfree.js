@@ -169,7 +169,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   async _sendRequestToGasfreeProvider (method, path, body) {
     const timestamp = Math.floor(Date.now() / 1_000)
 
-    const message = method + path + timestamp
+    const message = method + '/nile' + path + timestamp
 
     const signature = createHmac('sha256', this._config.gasFreeApiSecret)
       .update(message)
