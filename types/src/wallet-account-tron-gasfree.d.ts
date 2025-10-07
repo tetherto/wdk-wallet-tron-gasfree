@@ -79,12 +79,12 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     /** @private */
     private _signTypedData;
 }
-export type IWalletAccount = import("@wdk/wallet").IWalletAccount;
-export type KeyPair = import("@wdk/wallet-tron").KeyPair;
-export type TronTransaction = import("@wdk/wallet-tron").TronTransaction;
-export type TransactionResult = import("@wdk/wallet-tron").TransactionResult;
-export type TransferOptions = import("@wdk/wallet-tron").TransferOptions;
-export type TransferResult = import("@wdk/wallet-tron").TransferResult;
-export type TronTransactionReceipt = import("@wdk/wallet-tron").TronTransactionReceipt;
+export type IWalletAccount = import("@tetherto/wdk-wallet").IWalletAccount;
+export type KeyPair = import("@tetherto/wdk-wallet-tron").KeyPair;
+export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransaction;
+export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionResult;
+export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
+export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
+export type TronTransactionReceipt = import("@tetherto/wdk-wallet-tron").TronTransactionReceipt;
 export type TronGasfreeWalletConfig = import("./wallet-account-read-only-tron-gasfree.js").TronGasfreeWalletConfig;
 import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-gasfree.js';
