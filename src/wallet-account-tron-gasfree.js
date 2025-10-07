@@ -171,7 +171,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
       user: address,
       receiver: recipient,
       value: amount.toString(),
-      maxFee: (feeEstimate * 200n).toString(),
+      maxFee: feeEstimate.toString(),
       deadline: timestamp + TOKEN_TRANSFER_DEADLINE,
       version: TOKEN_TRANSFER_SIGNATURE_VERSION,
       nonce: gasFreeAccount.nonce
