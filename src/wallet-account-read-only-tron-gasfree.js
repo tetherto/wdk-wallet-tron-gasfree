@@ -16,18 +16,18 @@
 
 import { createHmac } from 'crypto'
 
-import { WalletAccountReadOnly } from '@wdk/wallet'
+import { WalletAccountReadOnly } from '@tetherto/wdk-wallet'
 
-import { WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
+import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
 /** @typedef {import('tronweb').default } TronWeb */
 
-/** @typedef {import('@wdk/wallet-tron').TronTransaction} TronTransaction */
-/** @typedef {import('@wdk/wallet-tron').TransactionResult} TransactionResult */
-/** @typedef {import('@wdk/wallet-tron').TransferOptions} TransferOptions */
-/** @typedef {import('@wdk/wallet-tron').TransferResult} TransferResult */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransactionResult} TransactionResult */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransferOptions} TransferOptions */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
 
-/** @typedef {import('@wdk/wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
 
 /**
  * @typedef {Object} TronGasfreeWalletConfig
