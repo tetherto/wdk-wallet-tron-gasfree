@@ -170,8 +170,8 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
       serviceProvider: this._config.serviceProvider,
       user: address,
       receiver: recipient,
-      value: amount,
-      maxFee: feeEstimate,
+      value: amount.toString(),
+      maxFee: feeEstimate.toString(),
       deadline: timestamp + TOKEN_TRANSFER_DEADLINE,
       version: TOKEN_TRANSFER_SIGNATURE_VERSION,
       nonce: gasFreeAccount.nonce
