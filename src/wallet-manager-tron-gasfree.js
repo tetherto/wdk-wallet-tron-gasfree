@@ -14,15 +14,15 @@
 
 'use strict'
 
-import WalletManager from '@wdk/wallet'
+import WalletManager from '@tetherto/wdk-wallet'
 
-import WalletManagerTron from '@wdk/wallet-tron'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 
 import TronWeb from 'tronweb'
 
 import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js'
 
-/** @typedef {import('@wdk/wallet-tron').FeeRates} FeeRates */
+/** @typedef {import('@tetherto/wdk-wallet-tron').FeeRates} FeeRates */
 
 /** @typedef {import('./wallet-account-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
 
