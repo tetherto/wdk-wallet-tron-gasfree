@@ -1,6 +1,6 @@
 {
   "name": "@tetherto/wdk-wallet-tron-gasfree",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "A simple package to manage BIP-32 wallets for the tron blockchain with gasfree features.",
   "keywords": [
     "wdk",
@@ -50,7 +50,7 @@
     }
   },
   "publishConfig": {
-    "access": "restricted",
+    "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "standard": {
