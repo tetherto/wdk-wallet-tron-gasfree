@@ -62,11 +62,13 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      *
      * @param {TransferOptions} options - The transfer's options.
      * @param {Object} [config] - A configuration object containing additional options.
-     * @param {number} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
+     * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
      * @returns {Promise<TransferResult>} The transfer's result.
      */
-    transfer({ token, recipient, amount }: TransferOptions, config?: { transferMaxFee?: number }): Promise<TransferResult>;
-/**
+    transfer({ token, recipient, amount }: TransferOptions, config?: {
+        transferMaxFee?: number | bigint;
+    }): Promise<TransferResult>;
+    /**
      * Returns a read-only copy of the account.
      *
      * @returns {Promise<WalletAccountReadOnlyTronGasfree>} The read-only account.

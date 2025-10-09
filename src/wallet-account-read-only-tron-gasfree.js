@@ -41,6 +41,9 @@ import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
  * @property {number | bigint} [transferMaxFee] - The maximum fee amount for transfer operations.
  */
 
+const TRON_CHAIN_ID = 728126428
+const NILE_CHAIN_ID = 3448148188
+
 export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadOnly {
   /**
    * Creates a new read-only tron gasfree wallet account.
@@ -169,7 +172,13 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   async _sendRequestToGasfreeProvider (method, path, body) {
     const timestamp = Math.floor(Date.now() / 1_000)
 
-    const message = method + path + timestamp
+    if (![NILE_CHAIN_ID, TRON_CHAIN_ID].includes(this.config.chainId)) {
+      throw new Error(`Gas free provider does not support this chain with id ${this.config.chainId}`)
+    }
+
+    const prefix = this.config.chainId === NILE_CHAIN_ID ? '/nile' : '/tron'
+
+    const message = method + prefix + path + timestamp
 
     const signature = createHmac('sha256', this._config.gasFreeApiSecret)
       .update(message)
