@@ -119,8 +119,13 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
 
     const response = await this._sendRequestToGasfreeProvider('GET', '/api/v1/config/token/all')
 
-    const { data } = await response.json()
-    const paymasterToken = data.tokens.find(({ tokenAddress }) => tokenAddress === token)
+    const resp = await response.json()
+
+    if (resp.code !== 200) {
+      throw new Error(resp.reason)
+    }
+
+    const paymasterToken = resp.data.tokens.find(({ tokenAddress }) => tokenAddress === token)
     const fee = paymasterToken.transferFee + (+gasFreeAccount.active * paymasterToken.activateFee)
 
     return { fee: BigInt(fee) }
@@ -152,9 +157,13 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     if (!this._gasFreeAccount) {
       const response = await this._sendRequestToGasfreeProvider('GET', `/api/v1/address/${this._ownerAccountAddress}`)
 
-      const { data } = await response.json()
+      const resp = await response.json()
 
-      this._gasFreeAccount = data
+      if (resp.code !== 200) {
+        throw new Error(resp.reason)
+      }
+
+      this._gasFreeAccount = resp.data
     }
 
     return this._gasFreeAccount
@@ -172,11 +181,13 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   async _sendRequestToGasfreeProvider (method, path, body) {
     const timestamp = Math.floor(Date.now() / 1_000)
 
-    if (![NILE_CHAIN_ID, TRON_CHAIN_ID].includes(this.config.chainId)) {
-      throw new Error(`Gas free provider does not support this chain with id ${this.config.chainId}`)
+    const chainId = Number(this._config.chainId)
+
+    if (![NILE_CHAIN_ID, TRON_CHAIN_ID].includes(chainId)) {
+      throw new Error(`Gas free provider does not support this chain with id ${chainId}`)
     }
 
-    const prefix = this.config.chainId === NILE_CHAIN_ID ? '/nile' : '/tron'
+    const prefix = chainId === NILE_CHAIN_ID ? '/nile' : '/tron'
 
     const message = method + prefix + path + timestamp
 
@@ -220,8 +231,12 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   async _getTokenTransferHash (id) {
     const response = await this._sendRequestToGasfreeProvider('GET', `/api/v1/gasfree/${id}`)
 
-    const { data } = await response.json()
+    const resp = await response.json()
 
-    return data?.txnHash
+    if (resp.code !== 200) {
+      throw new Error(resp.reason)
+    }
+
+    return resp.data?.txnHash
   }
 }
