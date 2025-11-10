@@ -184,11 +184,15 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
       sig: signature.slice(2)
     })
 
-    const { data } = await response.json()
+    const resp = await response.json()
 
-    const fee = data.estimatedTransferFee + data.estimatedActivateFee
+    if (resp.code !== 200) {
+      throw new Error(resp.reason)
+    }
 
-    return { hash: data.id, fee: BigInt(fee) }
+    const fee = resp.data.estimatedTransferFee + resp.data.estimatedActivateFee
+
+    return { hash: resp.data.id, fee: BigInt(fee) }
   }
 
   /**
