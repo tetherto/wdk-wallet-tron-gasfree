@@ -32,7 +32,8 @@ import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 /**
  * @typedef {Object} TronGasfreeWalletConfig
  * @property {number} chainId - The blockchain's id.
- * @property {string | TronWeb} provider - The url of the tron web provider, or an instance of the {@link TronWeb} class.
+ * @property {string | TronWeb | Array<string | TronWeb>} provider - The url of the tron web provider, or an instance of the {@link TronWeb} class.
+ * @property {number} [retries] - The number of retries in the failover mechanism.
  * @property {string} gasFreeProvider - The gasfree provider's url.
  * @property {string} gasFreeApiKey - The gasfree provider's api key.
  * @property {string} gasFreeApiSecret - The gasfree provider's api secret.
@@ -105,7 +106,9 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
    */
   async quoteSendTransaction (tx) {
-    throw new Error("Method 'quoteSendTransaction(tx)' not supported on tron gasfree.")
+    throw new Error(
+      "Method 'quoteSendTransaction(tx)' not supported on tron gasfree."
+    )
   }
 
   /**
@@ -117,7 +120,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   async quoteTransfer ({ token, recipient, amount }) {
     const gasFreeAccount = await this._getGasfreeAccount()
 
-    const response = await this._sendRequestToGasfreeProvider('GET', '/api/v1/config/token/all')
+    const response = await this._sendRequestToGasfreeProvider(
+      'GET',
+      '/api/v1/config/token/all'
+    )
 
     const resp = await response.json()
 
@@ -125,8 +131,12 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
       throw new Error(resp.reason)
     }
 
-    const paymasterToken = resp.data.tokens.find(({ tokenAddress }) => tokenAddress === token)
-    const fee = paymasterToken.transferFee + (+gasFreeAccount.active * paymasterToken.activateFee)
+    const paymasterToken = resp.data.tokens.find(
+      ({ tokenAddress }) => tokenAddress === token
+    )
+    const fee =
+      paymasterToken.transferFee +
+      +gasFreeAccount.active * paymasterToken.activateFee
 
     return { fee: BigInt(fee) }
   }
@@ -155,7 +165,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    */
   async _getGasfreeAccount () {
     if (!this._gasFreeAccount) {
-      const response = await this._sendRequestToGasfreeProvider('GET', `/api/v1/address/${this._ownerAccountAddress}`)
+      const response = await this._sendRequestToGasfreeProvider(
+        'GET',
+        `/api/v1/address/${this._ownerAccountAddress}`
+      )
 
       const resp = await response.json()
 
@@ -184,7 +197,9 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     const chainId = Number(this._config.chainId)
 
     if (![NILE_CHAIN_ID, TRON_CHAIN_ID].includes(chainId)) {
-      throw new Error(`Gas free provider does not support this chain with id ${chainId}`)
+      throw new Error(
+        `Gas free provider does not support this chain with id ${chainId}`
+      )
     }
 
     const prefix = chainId === NILE_CHAIN_ID ? '/nile' : '/tron'
@@ -222,14 +237,20 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   async _getTronReadOnlyAccount () {
     const address = await this.getAddress()
 
-    const tronReadOnlyAccount = new WalletAccountReadOnlyTron(address, this._config)
+    const tronReadOnlyAccount = new WalletAccountReadOnlyTron(
+      address,
+      this._config
+    )
 
     return tronReadOnlyAccount
   }
 
   /** @private */
   async _getTokenTransferHash (id) {
-    const response = await this._sendRequestToGasfreeProvider('GET', `/api/v1/gasfree/${id}`)
+    const response = await this._sendRequestToGasfreeProvider(
+      'GET',
+      `/api/v1/gasfree/${id}`
+    )
 
     const resp = await response.json()
 
