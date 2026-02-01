@@ -139,7 +139,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * @returns {Promise<boolean>} True if the signature is valid.
    */
   async verify (message, signature) {
-    const tronReadOnlyAccount = await this._getTronReadOnlyAccount()
+    const tronReadOnlyAccount = new WalletAccountReadOnlyTron(this._ownerAccountAddress, this._config)
 
     return await tronReadOnlyAccount.verify(message, signature)
   }
