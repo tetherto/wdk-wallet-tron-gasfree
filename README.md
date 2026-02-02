@@ -525,6 +525,7 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: bigint}>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 
 ##### `getBalance()`
 Returns the account's native TRX balance in sun.
@@ -573,6 +574,21 @@ const quote = await readOnlyAccount.quoteTransfer({
 })
 console.log('Estimated fee (service provider will cover):', quote.fee, 'sun')
 console.log('Estimated fee in TRX:', Number(quote.fee) / 1e6)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature using the account's public key.
+
+**Parameters:**
+- `message` (string): Original message
+- `signature` (string): Signature as hex string
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello Tron Gas-Free!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ## 🌐 Supported Networks
