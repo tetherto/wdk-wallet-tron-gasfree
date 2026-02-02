@@ -45,6 +45,14 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      */
     quoteTransfer({ token, recipient, amount }: TransferOptions): Promise<Omit<TransferResult, "hash">>;
     /**
+     * Verifies a message's signature.
+     *
+     * @param {string} message - The original message.
+     * @param {string} signature - The signature to verify.
+     * @returns {Promise<boolean>} True if the signature is valid.
+     */
+    verify(message: string, signature: string): Promise<boolean>;
+    /**
      * Returns a transaction's receipt.
      *
      * @param {string} hash - The transaction's hash.
