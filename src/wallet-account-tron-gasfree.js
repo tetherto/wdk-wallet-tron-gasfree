@@ -18,9 +18,11 @@ import { WalletAccountTron } from '@tetherto/wdk-wallet-tron'
 
 import { secp256k1 } from '@noble/curves/secp256k1'
 
-import TronWeb from 'tronweb'
+import _TronWeb from 'tronweb'
 
 import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-gasfree.js'
+
+const { TronWeb } = _TronWeb
 
 /** @typedef {import('@tetherto/wdk-wallet').IWalletAccount} IWalletAccount */
 
