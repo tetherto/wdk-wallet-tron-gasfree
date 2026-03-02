@@ -1,11 +1,9 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals'
 import * as bip39 from 'bip39'
-import { HDKey } from '@scure/bip32'
-import { secp256k1 } from '@noble/curves/secp256k1'
-import { keccak_256 } from '@noble/hashes/sha3'
-import { utils } from 'tronweb'
+import { TronWeb, utils } from 'tronweb'
 
 const SEED_PHRASE = 'cook voyage document eight skate token alien guide drink uncle term abuse'
+const SEED = bip39.mnemonicToSeedSync(SEED_PHRASE)
 
 const ACCOUNT = {
   index: 0,
@@ -17,7 +15,7 @@ const ACCOUNT = {
   }
 }
 
-const GASFREE_ADDRESS = 'TGasFreeTestAddress123456789ab'
+const GASFREE_ADDRESS = 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD'
 
 const CONFIG = {
   chainId: 728126428,
@@ -38,84 +36,24 @@ const GASFREE_ACCOUNT_RESPONSE = {
   }
 }
 
-jest.unstable_mockModule('@tetherto/wdk-wallet-tron', () => {
-  class MockWalletAccountTron {
-    constructor (seedOrPhrase, path, config) {
-      let seed = seedOrPhrase
-      if (typeof seed === 'string') {
-        if (!bip39.validateMnemonic(seed)) {
-          throw new Error('The seed phrase is invalid.')
-        }
-        seed = bip39.mnemonicToSeedSync(seed)
-      }
+jest.unstable_mockModule('tronweb', () => {
+  const TronWebMock = jest.fn().mockImplementation((options) => {
+    const provider = new TronWeb(options)
 
-      const fullPath = `m/44'/195'/${path}`
-      let hdKey
-      try {
-        hdKey = HDKey.fromMasterSeed(seed).derive(fullPath)
-      } catch (e) {
-        throw new Error(e.message.toLowerCase())
-      }
+    provider.trx = {}
+    provider.transactionBuilder = {}
 
-      this._path = fullPath
-      this._index = parseInt(path.split('/').pop()) || 0
-      this._keyPair = {
-        privateKey: hdKey.privateKey,
-        publicKey: hdKey.publicKey
-      }
+    return provider
+  })
 
-      this._address = ACCOUNT.address
-    }
-
-    get index () { return this._index }
-    get path () { return this._path }
-    get keyPair () { return this._keyPair }
-
-    async getAddress () { return this._address }
-
-    async sign (message) {
-      const messageBytes = Buffer.from(message, 'utf8')
-      const prefix = Buffer.from(`\x19TRON Signed Message:\n${messageBytes.length}`, 'utf8')
-      const messageWithPrefixBytes = Buffer.concat([prefix, messageBytes])
-      const hash = keccak_256(messageWithPrefixBytes)
-      const signature = secp256k1.sign(hash, this._keyPair.privateKey)
-      const signatureWithRecovery = new Uint8Array([...signature.toCompactRawBytes(), 27 + signature.recovery])
-      const hex = Buffer.from(signatureWithRecovery).toString('hex')
-      return '0x' + hex
-    }
-
-    dispose () {
-      this._keyPair = { privateKey: new Uint8Array(32), publicKey: new Uint8Array(33) }
-    }
-  }
-
-  class MockWalletAccountReadOnlyTron {
-    constructor (address, config) {
-      this._address = address
-      this._config = config
-    }
-
-    async getBalance () { return 0n }
-    async getTokenBalance () { return 0n }
-    async verify () { return true }
-    async getTransactionReceipt () { return null }
-  }
+  Object.defineProperties(TronWebMock, Object.getOwnPropertyDescriptors(TronWeb))
 
   return {
-    WalletAccountTron: MockWalletAccountTron,
-    WalletAccountReadOnlyTron: MockWalletAccountReadOnlyTron,
-    default: class {
-      static _FEE_RATE_NORMAL_MULTIPLIER = 110n
-      static _FEE_RATE_FAST_MULTIPLIER = 200n
-    }
+    TronWeb: TronWebMock,
+    utils,
+    default: TronWebMock
   }
 })
-
-jest.unstable_mockModule('tronweb', () => ({
-  TronWeb: class {},
-  utils,
-  default: class {}
-}))
 
 const { WalletAccountTronGasfree, WalletAccountReadOnlyTronGasfree } = await import('../index.js')
 
@@ -153,6 +91,17 @@ describe('WalletAccountTronGasfree', () => {
       expect(account.index).toBe(ACCOUNT.index)
       expect(account.path).toBe(ACCOUNT.path)
       expect(account.keyPair).toEqual({
+        privateKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.privateKey, 'hex')),
+        publicKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.publicKey, 'hex'))
+      })
+    })
+
+    test('should successfully initialize an account for the given seed and path', () => {
+      const accountFromSeed = new WalletAccountTronGasfree(SEED, "0'/0/0", CONFIG)
+
+      expect(accountFromSeed.index).toBe(ACCOUNT.index)
+      expect(accountFromSeed.path).toBe(ACCOUNT.path)
+      expect(accountFromSeed.keyPair).toEqual({
         privateKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.privateKey, 'hex')),
         publicKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.publicKey, 'hex'))
       })
@@ -278,6 +227,7 @@ describe('WalletAccountTronGasfree', () => {
         value: TRANSFER.amount.toString(),
         nonce: GASFREE_ACCOUNT_RESPONSE.data.nonce
       }))
+      expect(submitBody.sig).toBeDefined()
     })
 
     test('should throw if the transfer fee exceeds the transfer max fee configuration', async () => {
@@ -302,12 +252,6 @@ describe('WalletAccountTronGasfree', () => {
       const readOnlyAccount = await account.toReadOnlyAccount()
 
       expect(readOnlyAccount).toBeInstanceOf(WalletAccountReadOnlyTronGasfree)
-    })
-  })
-
-  describe('dispose', () => {
-    test('should dispose the account without errors', () => {
-      expect(() => account.dispose()).not.toThrow()
     })
   })
 })

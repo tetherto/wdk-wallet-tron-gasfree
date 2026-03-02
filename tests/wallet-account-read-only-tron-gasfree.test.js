@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { TronWeb, utils } from 'tronweb'
 
 const OWNER_ADDRESS = 'TXngH8bVadn9ZWtKBgjKQcqN1GsZ7A1jcb'
-const GASFREE_ADDRESS = 'TGasFreeTestAddress123456789ab'
+const GASFREE_ADDRESS = 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD'
 
 const CONFIG = {
   chainId: 728126428,
@@ -27,34 +28,36 @@ const getTokenBalanceMock = jest.fn()
 const verifyMock = jest.fn()
 const getTransactionReceiptMock = jest.fn()
 
+jest.unstable_mockModule('tronweb', () => {
+  const TronWebMock = jest.fn().mockReturnValue({})
+
+  Object.defineProperties(TronWebMock, Object.getOwnPropertyDescriptors(TronWeb))
+
+  return {
+    TronWeb: TronWebMock,
+    utils,
+    default: TronWebMock
+  }
+})
+
 jest.unstable_mockModule('@tetherto/wdk-wallet-tron', () => {
-  class MockWalletAccountReadOnlyTron {
-    constructor (address, config) {
+  class WalletAccountReadOnlyTron {
+    constructor (address) {
       this._address = address
-      this._config = config
     }
 
+    async getAddress () { return this._address }
     async getBalance () { return getBalanceMock(this._address) }
-    async getTokenBalance (token) { return getTokenBalanceMock(token) }
+    async getTokenBalance (tokenAddress) { return getTokenBalanceMock(tokenAddress) }
     async verify (message, signature) { return verifyMock(message, signature) }
     async getTransactionReceipt (hash) { return getTransactionReceiptMock(hash) }
   }
 
-  return {
-    WalletAccountTron: class {},
-    WalletAccountReadOnlyTron: MockWalletAccountReadOnlyTron,
-    default: class {
-      static _FEE_RATE_NORMAL_MULTIPLIER = 110n
-      static _FEE_RATE_FAST_MULTIPLIER = 200n
-    }
-  }
-})
+  class WalletAccountTron {}
+  class WalletManagerTron {}
 
-jest.unstable_mockModule('tronweb', () => ({
-  TronWeb: class {},
-  utils: {},
-  default: class {}
-}))
+  return { default: WalletManagerTron, WalletAccountReadOnlyTron, WalletAccountTron }
+})
 
 const { WalletAccountReadOnlyTronGasfree } = await import('../index.js')
 
@@ -100,6 +103,87 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
           body: null
         }
       )
+    })
+
+    test('should throw when the address API returns a non-200 code', async () => {
+      fetchMock.mockImplementation((url) => {
+        if (url.includes('/api/v1/address/')) {
+          return mockFetchResponse({
+            code: 404,
+            reason: 'Account not found'
+          })
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
+      })
+
+      const freshAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, CONFIG)
+
+      await expect(freshAccount.getAddress())
+        .rejects.toThrow('Account not found')
+    })
+
+    test('should use /nile prefix for Nile testnet chain id', async () => {
+      const nileConfig = { ...CONFIG, chainId: 3448148188 }
+      const nileAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, nileConfig)
+
+      await nileAccount.getAddress()
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining(`/api/v1/address/${OWNER_ADDRESS}`),
+        {
+          method: 'GET',
+          headers: {
+            Timestamp: expect.any(String),
+            Authorization: expect.stringContaining(`ApiKey ${CONFIG.gasFreeApiKey}:`),
+            'Content-Type': 'application/json'
+          },
+          body: null
+        }
+      )
+    })
+
+    test('should throw for unsupported chain id', async () => {
+      const invalidConfig = { ...CONFIG, chainId: 999 }
+      const invalidAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, invalidConfig)
+
+      await expect(invalidAccount.getAddress())
+        .rejects.toThrow('Gas free provider does not support this chain with id 999')
+    })
+
+    test('should throw when the provider returns an error', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ reason: 'Unauthorized', message: 'Invalid API key' })
+      })
+
+      const freshAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, CONFIG)
+
+      await expect(freshAccount.getAddress())
+        .rejects.toThrow('Gas free provider error (Unauthorized): Invalid API key.')
+    })
+  })
+
+  describe('verify', () => {
+    const MESSAGE = 'Dummy message to sign.'
+    const SIGNATURE = '0x67b1e4bb9a9b070cd60776ceab1ff4d7c4d4997bb5b4a71757da646f75d847e6600c22d8d83caa13d42c33099f75ba5ec30390467392aa78a3e5319da6c30e291b'
+
+    test('should return true for a valid signature', async () => {
+      verifyMock.mockResolvedValue(true)
+
+      const result = await account.verify(MESSAGE, SIGNATURE)
+
+      expect(verifyMock).toHaveBeenCalledWith(MESSAGE, SIGNATURE)
+      expect(result).toBe(true)
+    })
+
+    test('should return false for an invalid signature', async () => {
+      verifyMock.mockResolvedValue(false)
+
+      const result = await account.verify('Another message.', SIGNATURE)
+
+      expect(verifyMock).toHaveBeenCalledWith('Another message.', SIGNATURE)
+      expect(result).toBe(false)
     })
   })
 
@@ -202,27 +286,25 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(fee).toBe(150_000n)
     })
-  })
 
-  describe('verify', () => {
-    const MESSAGE = 'Dummy message to sign.'
-    const SIGNATURE = '0x67b1e4bb9a9b070cd60776ceab1ff4d7c4d4997bb5b4a71757da646f75d847e6600c22d8d83caa13d42c33099f75ba5ec30390467392aa78a3e5319da6c30e291b'
+    test('should throw when the token config API returns a non-200 code', async () => {
+      fetchMock.mockImplementation((url) => {
+        if (url.includes('/api/v1/address/')) {
+          return mockFetchResponse(GASFREE_ACCOUNT_RESPONSE)
+        }
 
-    test('should return true for a valid signature', async () => {
-      verifyMock.mockResolvedValue(true)
+        if (url.includes('/api/v1/config/token/all')) {
+          return mockFetchResponse({
+            code: 500,
+            reason: 'Internal server error'
+          })
+        }
 
-      const result = await account.verify(MESSAGE, SIGNATURE)
+        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
+      })
 
-      expect(result).toBe(true)
-      expect(verifyMock).toHaveBeenCalledWith(MESSAGE, SIGNATURE)
-    })
-
-    test('should return false for an invalid signature', async () => {
-      verifyMock.mockResolvedValue(false)
-
-      const result = await account.verify('Another message.', SIGNATURE)
-
-      expect(result).toBe(false)
+      await expect(account.quoteTransfer(TRANSFER))
+        .rejects.toThrow('Internal server error')
     })
   })
 
@@ -281,57 +363,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(receipt).toBe(null)
     })
-  })
 
-  describe('_getGasfreeAccount', () => {
-    test('should throw when the address API returns a non-200 code', async () => {
-      fetchMock.mockImplementation((url) => {
-        if (url.includes('/api/v1/address/')) {
-          return mockFetchResponse({
-            code: 404,
-            reason: 'Account not found'
-          })
-        }
-
-        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
-      })
-
-      const freshAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, CONFIG)
-
-      await expect(freshAccount.getAddress())
-        .rejects.toThrow('Account not found')
-    })
-  })
-
-  describe('quoteTransfer error handling', () => {
-    const TRANSFER = {
-      token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
-      recipient: 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD',
-      amount: 100_000_000
-    }
-
-    test('should throw when the token config API returns a non-200 code', async () => {
-      fetchMock.mockImplementation((url) => {
-        if (url.includes('/api/v1/address/')) {
-          return mockFetchResponse(GASFREE_ACCOUNT_RESPONSE)
-        }
-
-        if (url.includes('/api/v1/config/token/all')) {
-          return mockFetchResponse({
-            code: 500,
-            reason: 'Internal server error'
-          })
-        }
-
-        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
-      })
-
-      await expect(account.quoteTransfer(TRANSFER))
-        .rejects.toThrow('Internal server error')
-    })
-  })
-
-  describe('getTransactionReceipt error handling', () => {
     test('should throw when the gasfree transaction API returns a non-200 code', async () => {
       fetchMock.mockImplementation((url) => {
         if (url.includes('/api/v1/address/')) {
@@ -350,48 +382,6 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       await expect(account.getTransactionReceipt('invalid-tx-id'))
         .rejects.toThrow('Transaction not found')
-    })
-  })
-
-  describe('_sendRequestToGasfreeProvider', () => {
-    test('should use /nile prefix for Nile testnet chain id', async () => {
-      const nileConfig = { ...CONFIG, chainId: 3448148188 }
-      const nileAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, nileConfig)
-
-      await nileAccount.getAddress()
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/v1/address/${OWNER_ADDRESS}`),
-        {
-          method: 'GET',
-          headers: {
-            Timestamp: expect.any(String),
-            Authorization: expect.stringContaining(`ApiKey ${CONFIG.gasFreeApiKey}:`),
-            'Content-Type': 'application/json'
-          },
-          body: null
-        }
-      )
-    })
-
-    test('should throw for unsupported chain id', async () => {
-      const invalidConfig = { ...CONFIG, chainId: 999 }
-      const invalidAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, invalidConfig)
-
-      await expect(invalidAccount.getAddress())
-        .rejects.toThrow('Gas free provider does not support this chain with id 999')
-    })
-
-    test('should throw when the provider returns an error', async () => {
-      fetchMock.mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ reason: 'Unauthorized', message: 'Invalid API key' })
-      })
-
-      const freshAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, CONFIG)
-
-      await expect(freshAccount.getAddress())
-        .rejects.toThrow('Gas free provider error (Unauthorized): Invalid API key.')
     })
   })
 })
