@@ -126,7 +126,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     }
 
     const paymasterToken = resp.data.tokens.find(({ tokenAddress }) => tokenAddress === token)
-    const fee = paymasterToken.transferFee + (+gasFreeAccount.active * paymasterToken.activateFee)
+    const fee = paymasterToken.transferFee + (!gasFreeAccount.active ? paymasterToken.activateFee : 0)
 
     return { fee: BigInt(fee) }
   }
