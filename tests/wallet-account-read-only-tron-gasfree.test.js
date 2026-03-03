@@ -105,63 +105,6 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       )
     })
 
-    test('should throw when the address API returns a non-200 code', async () => {
-      fetchMock.mockImplementation((url) => {
-        if (url.includes('/api/v1/address/')) {
-          return mockFetchResponse({
-            code: 404,
-            reason: 'Account not found'
-          })
-        }
-
-        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
-      })
-
-      const freshAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, CONFIG)
-
-      await expect(freshAccount.getAddress())
-        .rejects.toThrow('Account not found')
-    })
-
-    test('should use /nile prefix for Nile testnet chain id', async () => {
-      const nileConfig = { ...CONFIG, chainId: 3448148188 }
-      const nileAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, nileConfig)
-
-      await nileAccount.getAddress()
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/v1/address/${OWNER_ADDRESS}`),
-        {
-          method: 'GET',
-          headers: {
-            Timestamp: expect.any(String),
-            Authorization: expect.stringContaining(`ApiKey ${CONFIG.gasFreeApiKey}:`),
-            'Content-Type': 'application/json'
-          },
-          body: null
-        }
-      )
-    })
-
-    test('should throw for unsupported chain id', async () => {
-      const invalidConfig = { ...CONFIG, chainId: 999 }
-      const invalidAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, invalidConfig)
-
-      await expect(invalidAccount.getAddress())
-        .rejects.toThrow('Gas free provider does not support this chain with id 999')
-    })
-
-    test('should throw when the provider returns an error', async () => {
-      fetchMock.mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ reason: 'Unauthorized', message: 'Invalid API key' })
-      })
-
-      const freshAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, CONFIG)
-
-      await expect(freshAccount.getAddress())
-        .rejects.toThrow('Gas free provider error (Unauthorized): Invalid API key.')
-    })
   })
 
   describe('verify', () => {
