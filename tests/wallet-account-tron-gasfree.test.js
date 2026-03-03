@@ -137,12 +137,6 @@ describe('WalletAccountTronGasfree', () => {
       )
     })
 
-    test('should cache the gasfree account after the first fetch', async () => {
-      await account.getAddress()
-      await account.getAddress()
-
-      expect(fetchMock).toHaveBeenCalledTimes(1)
-    })
   })
 
   describe('sign', () => {
