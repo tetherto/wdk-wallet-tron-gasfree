@@ -232,6 +232,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     })
 
     if (!response.ok) {
+      if (!gasFreeApiKey && response.status === 401) {
+        throw new Error('Gas free provider requires authentication.')
+      }
+
       const { reason, message } = await response.json()
 
       throw new Error(`Gas free provider error (${reason}): ${message}.`)

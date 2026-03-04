@@ -139,6 +139,20 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       await expect(partialAccount.getAddress())
         .rejects.toThrow('Both gasFreeApiKey and gasFreeApiSecret must be provided together.')
     })
+
+    test('should throw auth error when provider returns 401 and no credentials are configured', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve({ reason: 'Unauthorized', message: 'Invalid API key' })
+      })
+
+      const { gasFreeApiKey, gasFreeApiSecret, ...proxyConfig } = CONFIG
+      const proxyAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, proxyConfig)
+
+      await expect(proxyAccount.getAddress())
+        .rejects.toThrow('Gas free provider requires authentication.')
+    })
   })
 
   describe('verify', () => {
