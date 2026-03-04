@@ -34,8 +34,8 @@ import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
  * @property {number} chainId - The blockchain's id.
  * @property {string | TronWeb} provider - The url of the tron web provider, or an instance of the {@link TronWeb} class.
  * @property {string} gasFreeProvider - The gasfree provider's url.
- * @property {string} gasFreeApiKey - The gasfree provider's api key.
- * @property {string} gasFreeApiSecret - The gasfree provider's api secret.
+ * @property {string} [gasFreeApiKey] - The gasfree provider's api key.
+ * @property {string} [gasFreeApiSecret] - The gasfree provider's api secret.
  * @property {string} serviceProvider - The address of the service provider.
  * @property {string} verifyingContract - The address of the verifying contract.
  * @property {number | bigint} [transferMaxFee] - The maximum fee amount for transfer operations.
@@ -192,28 +192,37 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * @returns {Promise<Response>} The http response.
    */
   async _sendRequestToGasfreeProvider (method, path, body) {
-    const timestamp = Math.floor(Date.now() / 1_000)
+    const { gasFreeApiKey, gasFreeApiSecret } = this._config
 
-    const chainId = Number(this._config.chainId)
-
-    if (![NILE_CHAIN_ID, TRON_CHAIN_ID].includes(chainId)) {
-      throw new Error(`Gas free provider does not support this chain with id ${chainId}`)
+    if ((gasFreeApiKey && !gasFreeApiSecret) || (!gasFreeApiKey && gasFreeApiSecret)) {
+      throw new Error('Both gasFreeApiKey and gasFreeApiSecret must be provided together.')
     }
 
-    const prefix = chainId === NILE_CHAIN_ID ? '/nile' : '/tron'
-
-    const message = method + prefix + path + timestamp
-
-    const signature = createHmac('sha256', this._config.gasFreeApiSecret)
-      .update(message)
-      .digest('base64')
+    const timestamp = Math.floor(Date.now() / 1_000)
 
     const url = this._config.gasFreeProvider + path
 
     const headers = {
-      Timestamp: `${timestamp}`,
-      Authorization: `ApiKey ${this._config.gasFreeApiKey}:${signature}`,
       'Content-Type': 'application/json'
+    }
+
+    if (gasFreeApiKey && gasFreeApiSecret) {
+      const chainId = Number(this._config.chainId)
+
+      if (![NILE_CHAIN_ID, TRON_CHAIN_ID].includes(chainId)) {
+        throw new Error(`Gas free provider does not support this chain with id ${chainId}`)
+      }
+
+      const prefix = chainId === NILE_CHAIN_ID ? '/nile' : '/tron'
+
+      const message = method + prefix + path + timestamp
+
+      const signature = createHmac('sha256', gasFreeApiSecret)
+        .update(message)
+        .digest('base64')
+
+      headers.Timestamp = `${timestamp}`
+      headers.Authorization = `ApiKey ${gasFreeApiKey}:${signature}`
     }
 
     const response = await fetch(url, {

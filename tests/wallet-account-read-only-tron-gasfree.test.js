@@ -105,6 +105,40 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       )
     })
 
+    test('should send requests without auth headers when no credentials are provided', async () => {
+      const { gasFreeApiKey, gasFreeApiSecret, ...proxyConfig } = CONFIG
+      const proxyAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, proxyConfig)
+
+      const address = await proxyAccount.getAddress()
+
+      expect(address).toBe(GASFREE_ADDRESS)
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining(`/api/v1/address/${OWNER_ADDRESS}`),
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: null
+        }
+      )
+    })
+
+    test('should throw if only gasFreeApiKey is provided without gasFreeApiSecret', async () => {
+      const { gasFreeApiSecret, ...partialConfig } = CONFIG
+      const partialAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig)
+
+      await expect(partialAccount.getAddress())
+        .rejects.toThrow('Both gasFreeApiKey and gasFreeApiSecret must be provided together.')
+    })
+
+    test('should throw if only gasFreeApiSecret is provided without gasFreeApiKey', async () => {
+      const { gasFreeApiKey, ...partialConfig } = CONFIG
+      const partialAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig)
+
+      await expect(partialAccount.getAddress())
+        .rejects.toThrow('Both gasFreeApiKey and gasFreeApiSecret must be provided together.')
+    })
   })
 
   describe('verify', () => {
