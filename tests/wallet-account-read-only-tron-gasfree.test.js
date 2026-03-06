@@ -10,8 +10,8 @@ const CONFIG = {
   gasFreeProvider: 'https://gasfree.provider',
   gasFreeApiKey: 'test-api-key',
   gasFreeApiSecret: 'test-api-secret',
-  serviceProvider: 'TServiceProviderAddress',
-  verifyingContract: 'TVerifyingContractAddress'
+  serviceProvider: 'TKtWbdzEq5ss9vTS9kwRhBp5mXmBfBns3E',
+  verifyingContract: 'THQGuFzL87ZqhxkgqYEryRAd7gqFqL5rdc'
 }
 
 const GASFREE_ACCOUNT_RESPONSE = {
