@@ -118,27 +118,6 @@ describe('WalletAccountTronGasfree', () => {
     })
   })
 
-  describe('getAddress', () => {
-    test('should return the gasfree address from the provider', async () => {
-      const address = await account.getAddress()
-
-      expect(address).toBe(GASFREE_ADDRESS)
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/v1/address/${ACCOUNT.address}`),
-        {
-          method: 'GET',
-          headers: {
-            Timestamp: expect.any(String),
-            Authorization: expect.stringContaining(`ApiKey ${CONFIG.gasFreeApiKey}:`),
-            'Content-Type': 'application/json'
-          },
-          body: null
-        }
-      )
-    })
-
-  })
-
   describe('sign', () => {
     const MESSAGE = 'Dummy message to sign.'
     const EXPECTED_SIGNATURE = '0x67b1e4bb9a9b070cd60776ceab1ff4d7c4d4997bb5b4a71757da646f75d847e6600c22d8d83caa13d42c33099f75ba5ec30390467392aa78a3e5319da6c30e291b'
@@ -202,6 +181,9 @@ describe('WalletAccountTronGasfree', () => {
     }
 
     test('should successfully transfer tokens via gasfree', async () => {
+      const FIXED_TIMESTAMP = 1700000000
+      jest.spyOn(Date, 'now').mockReturnValue(FIXED_TIMESTAMP * 1_000)
+
       mockTransferFetch()
 
       const { hash, fee } = await account.transfer(TRANSFER)
@@ -221,7 +203,7 @@ describe('WalletAccountTronGasfree', () => {
         value: TRANSFER.amount.toString(),
         nonce: GASFREE_ACCOUNT_RESPONSE.data.nonce
       }))
-      expect(submitBody.sig).toBeDefined()
+      expect(submitBody.sig).toBe('1b232c9d7f980fd556727b86901741eea50b33a58f97146f46e3eacafb944531087063e112913d867e04323e6add398b00675c972b80aa54d55a1a9694e6d8931b')
     })
 
     test('should throw if the transfer fee exceeds the transfer max fee configuration', async () => {
@@ -246,6 +228,7 @@ describe('WalletAccountTronGasfree', () => {
       const readOnlyAccount = await account.toReadOnlyAccount()
 
       expect(readOnlyAccount).toBeInstanceOf(WalletAccountReadOnlyTronGasfree)
+      expect(await readOnlyAccount.getAddress()).toBe(GASFREE_ADDRESS)
     })
   })
 })

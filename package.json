@@ -22,8 +22,9 @@
     "build:types": "tsc",
     "lint": "standard",
     "lint:fix": "standard --fix --env jest",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
-    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --testPathIgnorePatterns=testnet",
+    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage --testPathIgnorePatterns=testnet",
+    "test:testnet": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --testPathPattern=testnet"
   },
   "dependencies": {
     "@noble/curves": "1.9.2",
@@ -35,8 +36,8 @@
     "tronweb": "6.2.0"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "jest": "^29.7.0",
+    "cross-env": "7.0.3",
+    "jest": "29.7.0",
     "standard": "17.1.2",
     "typescript": "5.8.3"
   },
