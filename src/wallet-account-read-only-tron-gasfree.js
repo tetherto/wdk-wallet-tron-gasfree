@@ -204,8 +204,6 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
       throw new Error(`Gas free provider does not support this chain with id ${chainId}`)
     }
 
-    const timestamp = Math.floor(Date.now() / 1_000)
-
     const url = this._config.gasFreeProvider + path
 
     const headers = {
@@ -213,6 +211,8 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     }
 
     if (gasFreeApiKey && gasFreeApiSecret) {
+      const timestamp = Math.floor(Date.now() / 1_000)
+
       const prefix = chainId === NILE_CHAIN_ID ? '/nile' : '/tron'
 
       const message = method + prefix + path + timestamp
