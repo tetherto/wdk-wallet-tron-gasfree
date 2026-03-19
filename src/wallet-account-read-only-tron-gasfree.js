@@ -195,7 +195,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     const { gasFreeApiKey, gasFreeApiSecret } = this._config
 
     if ((gasFreeApiKey && !gasFreeApiSecret) || (!gasFreeApiKey && gasFreeApiSecret)) {
-      throw new Error('Both gasFreeApiKey and gasFreeApiSecret must be provided together.')
+      throw new Error("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
     }
 
     const chainId = Number(this._config.chainId)
