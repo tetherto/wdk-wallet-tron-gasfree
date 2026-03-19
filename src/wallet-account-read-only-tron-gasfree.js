@@ -54,6 +54,12 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   constructor (address, config) {
     super(undefined)
 
+    const { gasFreeApiKey, gasFreeApiSecret } = config
+
+    if ((gasFreeApiKey && !gasFreeApiSecret) || (!gasFreeApiKey && gasFreeApiSecret)) {
+      throw new Error("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+    }
+
     /**
      * The tron gasfree wallet account configuration.
      *
@@ -192,12 +198,6 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * @returns {Promise<Response>} The http response.
    */
   async _sendRequestToGasfreeProvider (method, path, body) {
-    const { gasFreeApiKey, gasFreeApiSecret } = this._config
-
-    if ((gasFreeApiKey && !gasFreeApiSecret) || (!gasFreeApiKey && gasFreeApiSecret)) {
-      throw new Error("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
-    }
-
     const chainId = Number(this._config.chainId)
 
     if (![NILE_CHAIN_ID, TRON_CHAIN_ID].includes(chainId)) {
@@ -209,6 +209,8 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     const headers = {
       'Content-Type': 'application/json'
     }
+
+    const { gasFreeApiKey, gasFreeApiSecret } = this._config
 
     if (gasFreeApiKey && gasFreeApiSecret) {
       const timestamp = Math.floor(Date.now() / 1_000)
@@ -232,10 +234,6 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     })
 
     if (!response.ok) {
-      if (!gasFreeApiKey && response.status === 401) {
-        throw new Error('Gas free provider requires authentication.')
-      }
-
       const { reason, message } = await response.json()
 
       throw new Error(`Gas free provider error (${reason}): ${message}.`)
