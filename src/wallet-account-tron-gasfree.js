@@ -18,7 +18,7 @@ import { WalletAccountTron } from '@tetherto/wdk-wallet-tron'
 
 import { secp256k1 } from '@noble/curves/secp256k1'
 
-import TronWeb from 'tronweb'
+import { utils as TronWebUtils } from 'tronweb'
 
 import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-gasfree.js'
 
@@ -206,7 +206,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
 
   /** @private */
   _signTypedData (domain, value) {
-    const messageDigest = TronWeb.utils._TypedDataEncoder
+    const messageDigest = TronWebUtils._TypedDataEncoder
       .hash(domain, PERMIT_712_TYPES, value)
       .slice(2)
 
