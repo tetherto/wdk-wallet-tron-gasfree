@@ -124,20 +124,18 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       )
     })
 
-    test('should throw if only gasFreeApiKey is provided without gasFreeApiSecret', async () => {
+    test('should throw if only gasFreeApiKey is provided without gasFreeApiSecret', () => {
       const { gasFreeApiSecret, ...partialConfig } = CONFIG
-      const partialAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig)
 
-      await expect(partialAccount.getAddress())
-        .rejects.toThrow('Both gasFreeApiKey and gasFreeApiSecret must be provided together.')
+      expect(() => new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig))
+        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
     })
 
-    test('should throw if only gasFreeApiSecret is provided without gasFreeApiKey', async () => {
+    test('should throw if only gasFreeApiSecret is provided without gasFreeApiKey', () => {
       const { gasFreeApiKey, ...partialConfig } = CONFIG
-      const partialAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig)
 
-      await expect(partialAccount.getAddress())
-        .rejects.toThrow('Both gasFreeApiKey and gasFreeApiSecret must be provided together.')
+      expect(() => new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig))
+        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
     })
   })
 
