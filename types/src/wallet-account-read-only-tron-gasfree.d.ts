@@ -103,11 +103,11 @@ export type TronGasfreeWalletConfig = {
     /**
      * - The gasfree provider's api key.
      */
-    gasFreeApiKey: string;
+    gasFreeApiKey?: string;
     /**
      * - The gasfree provider's api secret.
      */
-    gasFreeApiSecret: string;
+    gasFreeApiSecret?: string;
     /**
      * - The address of the service provider.
      */
