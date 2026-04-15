@@ -30,7 +30,8 @@
     "@tetherto/wdk-wallet": "1.0.0-beta.7",
     "@tetherto/wdk-wallet-tron": "1.0.0-beta.4",
     "bare-node-runtime": "^1.1.4",
-    "tronweb": "5.3.4"
+    "tronweb": "5.3.4",
+    "wdk-failover-provider": "^1.0.0"
   },
   "devDependencies": {
     "standard": "17.1.2",

@@ -22,6 +22,8 @@ import TronWeb from 'tronweb'
 
 import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js'
 
+import FailoverProvider from 'wdk-failover-provider'
+
 /** @typedef {import('@tetherto/wdk-wallet-tron').FeeRates} FeeRates */
 
 /** @typedef {import('./wallet-account-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
@@ -44,18 +46,39 @@ export default class WalletManagerTronGasfree extends WalletManager {
      */
     this._config = config
 
-    const { provider } = config
+    /**
+     * The tron web client.
+     *
+     * @protected
+     * @type {TronWeb | undefined}
+     */
+    this._tronWeb = undefined
 
-    if (provider) {
-      /**
-       * The tron web client.
-       *
-       * @protected
-       * @type {TronWeb | undefined}
-       */
-      this._tronWeb = typeof provider === 'string'
-        ? new TronWeb({ fullHost: provider })
-        : provider
+    const { provider, retries = 3 } = config
+
+    if (Array.isArray(provider)) {
+      this._tronWeb = provider
+        .reduce(
+          /**
+           * @param {FailoverProvider<TronWeb>} failover
+           * @param {string | TronWeb} provider
+           */
+          (failover, provider) =>
+            failover.addProvider(
+              typeof provider === 'string'
+                ? new TronWeb({ fullHost: provider })
+                : provider
+            ),
+          new FailoverProvider({ retries })
+        )
+        .initialize()
+    } else if (provider) {
+      this._tronWeb =
+        typeof provider === 'string'
+          ? new TronWeb({ fullHost: provider })
+          : provider
+    } else {
+      this._tronWeb = undefined
     }
   }
 
@@ -83,7 +106,11 @@ export default class WalletManagerTronGasfree extends WalletManager {
    */
   async getAccountByPath (path) {
     if (!this._accounts[path]) {
-      const account = new WalletAccountTronGasfree(this.seed, path, this._config)
+      const account = new WalletAccountTronGasfree(
+        this.seed,
+        path,
+        this._config
+      )
 
       this._accounts[path] = account
     }
@@ -98,16 +125,20 @@ export default class WalletManagerTronGasfree extends WalletManager {
    */
   async getFeeRates () {
     if (!this._tronWeb) {
-      throw new Error('The wallet must be connected to tron web to get fee rates.')
+      throw new Error(
+        'The wallet must be connected to tron web to get fee rates.'
+      )
     }
 
     const chainParameters = await this._tronWeb.trx.getChainParameters()
-    const getTransactionFee = chainParameters.find(({ key }) => key === 'getTransactionFee')
+    const getTransactionFee = chainParameters.find(
+      ({ key }) => key === 'getTransactionFee'
+    )
     const fee = BigInt(getTransactionFee.value)
 
     return {
-      normal: fee * WalletManagerTron._FEE_RATE_NORMAL_MULTIPLIER / 100n,
-      fast: fee * WalletManagerTron._FEE_RATE_FAST_MULTIPLIER / 100n
+      normal: (fee * WalletManagerTron._FEE_RATE_NORMAL_MULTIPLIER) / 100n,
+      fast: (fee * WalletManagerTron._FEE_RATE_FAST_MULTIPLIER) / 100n
     }
   }
 }
