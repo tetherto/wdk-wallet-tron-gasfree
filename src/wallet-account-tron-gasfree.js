@@ -117,6 +117,16 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
   }
 
   /**
+   * Signs a transaction.
+   *
+   * @param {TronTransaction} tx - The transaction.
+   * @returns {Promise<never>} Never resolves; always throws.
+   */
+  async signTransaction (tx) {
+    throw new Error("Method 'signTransaction(tx)' not supported on tron gasfree.")
+  }
+
+  /**
    * Sends a transaction.
    *
    * @param {TronTransaction} tx - The transaction.
