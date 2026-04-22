@@ -190,11 +190,12 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @returns {Promise<WalletAccountReadOnlyTronGasfree>} The read-only account.
    */
   async toReadOnlyAccount () {
-    const address = await this._ownerAccount.getAddress()
+    if (!this._tronGasfreeReadOnlyAccount) {
+      const address = await this._ownerAccount.getAddress()
+      this._tronGasfreeReadOnlyAccount = new WalletAccountReadOnlyTronGasfree(address, this._config)
+    }
 
-    const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(address, this._config)
-
-    return readOnlyAccount
+    return this._tronGasfreeReadOnlyAccount
   }
 
   /**
