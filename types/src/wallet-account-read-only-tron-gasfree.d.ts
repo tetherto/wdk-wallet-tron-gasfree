@@ -15,8 +15,11 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     protected _config: Omit<TronGasfreeWalletConfig, "transferMaxFee">;
     /** @private */
     private _ownerAccountAddress;
-    /** @private */
-    private _gasFreeAccount;
+    /**
+     * @private
+     * @type {TronGasfreeAccountInfo}
+     */
+    private _gasFreeAccount: TronGasfreeAccountInfo;
     /**
      * Returns the account's tronix balance.
      *
@@ -63,9 +66,9 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * Returns the gasfree provider's account.
      *
      * @protected
-     * @returns {Promise<any>} The gasfree provider's account.
+     * @returns {Promise<TronGasfreeAccountInfo>} The gasfree provider's account.
      */
-    protected _getGasfreeAccount(): Promise<any>;
+    protected _getGasfreeAccount(): Promise<TronGasfreeAccountInfo>;
     /**
      * Sends a http request to the gasfree provider.
      *
@@ -81,7 +84,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     /** @private */
     private _getTokenTransferHash;
 }
-export type TronWeb = import("tronweb").default;
+export type TronWeb = import("tronweb").TronWeb;
 export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransaction;
 export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionResult;
 export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
@@ -120,5 +123,57 @@ export type TronGasfreeWalletConfig = {
      * - The maximum fee amount for transfer operations.
      */
     transferMaxFee?: number | bigint;
+};
+export type TronGasfreeAssetInfo = {
+    /**
+     * - The token's smart contract address.
+     */
+    tokenAddress: string;
+    /**
+     * - The token's symbol.
+     */
+    tokenSymbol: string;
+    /**
+     * - The fee to activate the account for this token.
+     */
+    activateFee: number;
+    /**
+     * - The fee for transferring this token.
+     */
+    transferFee: number;
+    /**
+     * - The token's decimals.
+     */
+    decimal: number;
+    /**
+     * - Whether the token is frozen.
+     */
+    frozen: number;
+};
+export type TronGasfreeAccountInfo = {
+    /**
+     * - The owner's account address.
+     */
+    accountAddress: string;
+    /**
+     * - The gasfree contract address for the account.
+     */
+    gasFreeAddress: string;
+    /**
+     * - Whether the gasfree account is active.
+     */
+    active: boolean;
+    /**
+     * - The account's nonce.
+     */
+    nonce: number;
+    /**
+     * - Whether the account is allowed to submit transactions.
+     */
+    allowSubmit: boolean;
+    /**
+     * - The list of supported assets and their info.
+     */
+    assets: TronGasfreeAssetInfo[];
 };
 import { WalletAccountReadOnly } from '@tetherto/wdk-wallet';
