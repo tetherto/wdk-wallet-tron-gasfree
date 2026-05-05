@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals'
 import * as bip39 from 'bip39'
-import { TronWeb, utils } from 'tronweb'
+import { TronWeb, utils, Trx } from 'tronweb'
 
 const SEED_PHRASE = 'cook voyage document eight skate token alien guide drink uncle term abuse'
 const SEED = bip39.mnemonicToSeedSync(SEED_PHRASE)
@@ -51,7 +51,7 @@ jest.unstable_mockModule('tronweb', () => {
   return {
     TronWeb: TronWebMock,
     utils,
-    default: TronWebMock
+    Trx
   }
 })
 
