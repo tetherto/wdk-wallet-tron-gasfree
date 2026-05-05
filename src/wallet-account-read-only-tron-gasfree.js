@@ -20,7 +20,7 @@ import { WalletAccountReadOnly } from '@tetherto/wdk-wallet'
 
 import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
-/** @typedef {import('tronweb').default } TronWeb */
+/** @typedef {import('tronweb').TronWeb } TronWeb */
 
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransactionResult} TransactionResult */
@@ -40,6 +40,26 @@ import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
  * @property {string} verifyingContract - The address of the verifying contract.
  * @property {number | bigint} [transferMaxFee] - The maximum fee amount for transfer operations.
  */
+
+/**
+   * @typedef {Object} TronGasfreeAssetInfo
+   * @property {string} tokenAddress - The token's smart contract address.
+   * @property {string} tokenSymbol - The token's symbol.
+   * @property {number} activateFee - The fee to activate the account for this token.
+   * @property {number} transferFee - The fee for transferring this token.
+   * @property {number} decimal - The token's decimals.
+   * @property {number} frozen - Whether the token is frozen.
+   */
+
+/**
+   * @typedef {Object} TronGasfreeAccountInfo
+   * @property {string} accountAddress - The owner's account address.
+   * @property {string} gasFreeAddress - The gasfree contract address for the account.
+   * @property {boolean} active - Whether the gasfree account is active.
+   * @property {number} nonce - The account's nonce.
+   * @property {boolean} allowSubmit - Whether the account is allowed to submit transactions.
+   * @property {TronGasfreeAssetInfo[]} assets - The list of supported assets and their info.
+   */
 
 const TRON_CHAIN_ID = 728126428
 const NILE_CHAIN_ID = 3448148188
@@ -71,7 +91,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     /** @private */
     this._ownerAccountAddress = address
 
-    /** @private */
+    /**
+     * @private
+     * @type {TronGasfreeAccountInfo}
+     */
     this._gasFreeAccount = undefined
   }
 
@@ -120,7 +143,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * @param {TransferOptions} options - The transfer's options.
    * @returns {Promise<Omit<TransferResult, 'hash'>>} The transfer's quotes.
    */
-  async quoteTransfer ({ token, recipient, amount }) {
+  async quoteTransfer ({ token }) {
     const gasFreeAccount = await this._getGasfreeAccount()
 
     const response = await this._sendRequestToGasfreeProvider('GET', '/api/v1/config/token/all')
@@ -170,7 +193,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * Returns the gasfree provider's account.
    *
    * @protected
-   * @returns {Promise<any>} The gasfree provider's account.
+   * @returns {Promise<TronGasfreeAccountInfo>} The gasfree provider's account.
    */
   async _getGasfreeAccount () {
     if (!this._gasFreeAccount) {

@@ -3,9 +3,9 @@ export default class WalletManagerTronGasfree extends WalletManager {
      * Creates a new wallet manager for the tron blockchain that implements gasfree features.
      *
      * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
-     * @param {TronGasfreeWalletConfig} [config] - The configuration object.
+     * @param {TronGasfreeWalletConfig} config - The configuration object.
      */
-    constructor(seed: string | Uint8Array, config?: TronGasfreeWalletConfig);
+    constructor(seed: string | Uint8Array, config: TronGasfreeWalletConfig);
     /**
      * The tron gasfree wallet configuration.
      *
@@ -49,6 +49,6 @@ export default class WalletManagerTronGasfree extends WalletManager {
 }
 export type FeeRates = import("@tetherto/wdk-wallet-tron").FeeRates;
 export type TronGasfreeWalletConfig = import("./wallet-account-tron-gasfree.js").TronGasfreeWalletConfig;
-import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js';
 import WalletManager from '@tetherto/wdk-wallet';
-import TronWeb from 'tronweb'
+import { TronWeb } from 'tronweb';
+import WalletAccountTronGasfree from './wallet-account-tron-gasfree.js';
