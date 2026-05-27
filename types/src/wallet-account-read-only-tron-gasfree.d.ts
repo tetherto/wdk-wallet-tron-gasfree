@@ -39,7 +39,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * Quotes the costs of a transfer operation.
      *
      * @param {TransferOptions} options - The transfer's options.
-     * @returns {Promise<Omit<TransferResult, 'hash'> & { activateFee?: bigint }>} The transfer's quotes.
+     * @returns {Promise<TronGasfreeTransferQuote>} The transfer's quotes.
      */
     quoteTransfer({ token }: TransferOptions): Promise<Omit<TransferResult, "hash"> & {
         activateFee?: bigint;
@@ -172,5 +172,8 @@ export type TronGasfreeAccountInfo = {
      * - The list of supported assets and their info.
      */
     assets: TronGasfreeAssetInfo[];
+};
+export type TronGasfreeTransferQuote = Omit<TransferResult, "hash"> & {
+    activationFee?: bigint;
 };
 import { WalletAccountReadOnly } from '@tetherto/wdk-wallet';

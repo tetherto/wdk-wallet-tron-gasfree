@@ -216,7 +216,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
               tokens: [{
                 tokenAddress: TRANSFER.token,
                 transferFee: 50000,
-                activateFee: 100000
+                activationFee: 100000
               }]
             }
           })
@@ -225,12 +225,13 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
       })
 
-      const { fee } = await account.quoteTransfer(TRANSFER)
+      const { fee, activationFee } = await account.quoteTransfer(TRANSFER)
 
       expect(fee).toBe(50_000n)
+      expect(activationFee).toBeUndefined()
     })
 
-    test('should include activate fee when account needs activation', async () => {
+    test('should include activation fee when account needs activation', async () => {
       const freshAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, CONFIG)
 
       fetchMock.mockImplementation((url) => {
@@ -257,10 +258,10 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
       })
 
-      const { fee, activateFee } = await freshAccount.quoteTransfer(TRANSFER)
+      const { fee, activationFee } = await freshAccount.quoteTransfer(TRANSFER)
 
       expect(fee).toBe(150_000n)
-      expect(activateFee).toBe(100_000n)
+      expect(activationFee).toBe(100_000n)
     })
 
     test('should throw when the token config API returns a non-200 code', async () => {

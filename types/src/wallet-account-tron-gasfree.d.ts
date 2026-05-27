@@ -48,7 +48,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     sign(message: string): Promise<string>;
     /**
      * Signs a transaction.
-     * 
+     *
      * @param {TronTransaction} tx - The transaction.
      * @returns {Promise<never>} Never resolves; always throws.
      */
