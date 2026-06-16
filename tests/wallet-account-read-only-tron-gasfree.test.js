@@ -216,7 +216,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
               tokens: [{
                 tokenAddress: TRANSFER.token,
                 transferFee: 50000,
-                activateFee: 0
+                activateFee: 100000
               }]
             }
           })

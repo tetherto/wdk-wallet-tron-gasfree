@@ -58,6 +58,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      */
     getTransactionReceipt(hash: string): Promise<TronTransactionReceipt | null>;
     /**
+     * @protected
+     */
+    protected _quoteTransferWithAccount(options: TransferOptions, gasFreeAccount: TronGasfreeAccountInfo): Promise<Omit<TransferResult, "hash"> & TronActivationFee>;
+    /**
      * Returns the gasfree provider's account.
      *
      * @protected

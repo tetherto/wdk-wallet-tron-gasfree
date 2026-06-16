@@ -154,7 +154,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
 
     const gasFreeAccount = await this._getGasfreeAccount()
 
-    const { fee: feeEstimate } = await this.quoteTransfer({ token, recipient, amount })
+    const { fee: feeEstimate } = await this._quoteTransferWithAccount({ token }, gasFreeAccount)
 
     if (config.transferMaxFee !== undefined && feeEstimate >= config.transferMaxFee) {
       throw new Error('The transfer operation exceeds the transfer max fee.')

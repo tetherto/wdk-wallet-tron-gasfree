@@ -141,6 +141,16 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   async quoteTransfer ({ token }) {
     const gasFreeAccount = await this._getGasfreeAccount()
 
+    return this._quoteTransferWithAccount({ token }, gasFreeAccount)
+  }
+
+  /**
+   * @protected
+   * @param {TransferOptions} options - The transfer's options.
+   * @param {TronGasfreeAccountInfo} gasFreeAccount - The pre-fetched gasfree account.
+   * @returns {Promise<Omit<TransferResult, 'hash'> & TronActivationFee>}
+   */
+  async _quoteTransferWithAccount ({ token }, gasFreeAccount) {
     const response = await this._sendRequestToGasfreeProvider('GET', '/api/v1/config/token/all')
 
     const resp = await response.json()
