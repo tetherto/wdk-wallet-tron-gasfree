@@ -43,6 +43,16 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      */
     quoteTransfer({ token }: TransferOptions): Promise<Omit<TransferResult, "hash"> & TronActivationFee>;
     /**
+     * Quotes the costs of a transfer operation using a pre-fetched gasfree account.
+     *
+     * @protected
+     * @param {TronGasfreeAccountInfo} gasFreeAccount - The pre-fetched gasfree account.
+     * @param {TransferOptions} options - The transfer's options.
+     * @returns {Promise<Omit<TransferResult, 'hash'> & TronActivationFee>} The transfer's quotes.
+     * @throws {Error} If the provider doesn't support the given TRC-20 token.
+     */
+    protected _quoteTransferWithAccount(gasFreeAccount: TronGasfreeAccountInfo, options: TransferOptions): Promise<Omit<TransferResult, "hash"> & TronActivationFee>;
+    /**
      * Verifies a message's signature.
      *
      * @param {string} message - The original message.
@@ -57,10 +67,6 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * @returns {Promise<TronTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
      */
     getTransactionReceipt(hash: string): Promise<TronTransactionReceipt | null>;
-    /**
-     * @protected
-     */
-    protected _quoteTransferWithAccount(options: TransferOptions, gasFreeAccount: TronGasfreeAccountInfo): Promise<Omit<TransferResult, "hash"> & TronActivationFee>;
     /**
      * Returns the gasfree provider's account.
      *
