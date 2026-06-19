@@ -3,16 +3,16 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * Creates a new read-only tron gasfree wallet account.
      *
      * @param {string} address - The tron account's address.
-     * @param {Omit<TronGasfreeWalletConfig, 'transferMaxFee'>} config - The configuration object.
+     * @param {Omit<TronGasfreeWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>} config - The configuration object.
      */
-    constructor(address: string, config: Omit<TronGasfreeWalletConfig, "transferMaxFee">);
+    constructor(address: string, config: Omit<TronGasfreeWalletConfig, "transferMaxFee" | "transactionMaxFee">);
     /**
      * The tron gasfree wallet account configuration.
      *
      * @protected
-     * @type {Omit<TronGasfreeWalletConfig, 'transferMaxFee'>}
+     * @type {Omit<TronGasfreeWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>}
      */
-    protected _config: Omit<TronGasfreeWalletConfig, "transferMaxFee">;
+    protected _config: Omit<TronGasfreeWalletConfig, "transferMaxFee" | "transactionMaxFee">;
     /** @private */
     private _ownerAccountAddress;
     /**
@@ -129,6 +129,10 @@ export type TronGasfreeWalletConfig = {
      * - The maximum fee amount for transfer operations.
      */
     transferMaxFee?: number | bigint;
+    /**
+     * - The maximum fee amount for sendTransaction and signTransaction operations.
+     */
+    transactionMaxFee?: number | bigint;
 };
 export type TronGasfreeAssetInfo = {
     /**
