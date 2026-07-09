@@ -170,7 +170,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     }
 
     const activationFee = !gasFreeAccount.active ? paymasterToken.activateFee : 0
-    const fee = paymasterToken.transferFee + activationFee
+    const fee = BigInt(paymasterToken.transferFee) + BigInt(activationFee)
 
     return { fee: BigInt(fee), activationFee: BigInt(activationFee) }
   }
