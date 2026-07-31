@@ -22,6 +22,7 @@
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferOptions} TransferOptions */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionReceipt} TronTransactionReceipt */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionInfo} TronTransactionInfo */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronActivationFee} TronActivationFee */
 
 /** @typedef {import('./src/wallet-account-read-only-tron-gasfree.js').TronGasfreeAssetInfo} TronGasfreeAssetInfo */

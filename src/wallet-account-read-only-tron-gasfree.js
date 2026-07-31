@@ -28,6 +28,7 @@ import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
 
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
+/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionInfo } TronTransactionInfo */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronActivationFee } TronActivationFee */
 
 /**
@@ -191,6 +192,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   /**
    * Returns a transaction's receipt.
    *
+   * @deprecated Use {@link getTransaction} instead, which returns a normalized, finality-based receipt. The raw tron receipt remains available on its `receipt` property.
    * @param {string} hash - The transaction's hash.
    * @returns {Promise<TronTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
    */
@@ -202,6 +204,36 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     return txHash
       ? await tronReadOnlyAccount.getTransactionReceipt(txHash)
       : null
+  }
+
+  /**
+   * Returns a normalized, finality-based receipt for a gasfree transfer.
+   *
+   * @param {string} hash - The gasfree transfer's id.
+   * @returns {Promise<TronTransactionInfo | null>} The normalized receipt, or null if the transfer is not yet on-chain.
+   */
+  async getTransaction (hash) {
+    const tronReadOnlyAccount = await this._getTronReadOnlyAccount()
+
+    const txHash = await this._getTokenTransferHash(hash)
+
+    if (!txHash) {
+      return null
+    }
+
+    const info = await tronReadOnlyAccount.getTransaction(txHash)
+
+    return info ? { ...info, id: hash } : null
+  }
+
+  /** @protected @type {number} */
+  get _defaultWaitInterval () {
+    return 3000
+  }
+
+  /** @protected @type {number} */
+  get _defaultWaitTimeout () {
+    return 120000
   }
 
   /**

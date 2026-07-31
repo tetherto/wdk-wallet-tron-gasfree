@@ -27,6 +27,7 @@ const getBalanceMock = jest.fn()
 const getTokenBalanceMock = jest.fn()
 const verifyMock = jest.fn()
 const getTransactionReceiptMock = jest.fn()
+const getTransactionMock = jest.fn()
 
 jest.unstable_mockModule('tronweb', () => {
   const TronWebMock = jest.fn().mockReturnValue({})
@@ -51,6 +52,7 @@ jest.unstable_mockModule('@tetherto/wdk-wallet-tron', () => {
     async getTokenBalance (tokenAddress) { return getTokenBalanceMock(tokenAddress) }
     async verify (message, signature) { return verifyMock(message, signature) }
     async getTransactionReceipt (hash) { return getTransactionReceiptMock(hash) }
+    async getTransaction (hash) { return getTransactionMock(hash) }
   }
 
   class WalletAccountTron {}
@@ -379,6 +381,70 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       await expect(account.getTransactionReceipt('invalid-tx-id'))
         .rejects.toThrow('Transaction not found')
+    })
+  })
+
+  describe('getTransaction', () => {
+    const GASFREE_TX_ID = 'gasfree-tx-id-123'
+    const ONCHAIN_TX_HASH = 'onchain-tx-hash-456'
+
+    test('should resolve the on-chain hash and return a normalized receipt keyed by the gasfree id', async () => {
+      fetchMock.mockImplementation((url) => {
+        if (url.includes('/api/v1/address/')) {
+          return mockFetchResponse(GASFREE_ACCOUNT_RESPONSE)
+        }
+
+        if (url.includes(`/api/v1/gasfree/${GASFREE_TX_ID}`)) {
+          return mockFetchResponse({
+            code: 200,
+            data: { txnHash: ONCHAIN_TX_HASH }
+          })
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
+      })
+
+      getTransactionMock.mockResolvedValue({
+        id: ONCHAIN_TX_HASH,
+        finality: 'final',
+        success: true,
+        blockRef: 12345,
+        fee: 1000n,
+        confirmations: 6,
+        receipt: { id: ONCHAIN_TX_HASH }
+      })
+
+      const info = await account.getTransaction(GASFREE_TX_ID)
+
+      expect(getTransactionMock).toHaveBeenCalledWith(ONCHAIN_TX_HASH)
+      expect(info).toMatchObject({
+        id: GASFREE_TX_ID,
+        finality: 'final',
+        success: true,
+        confirmations: 6
+      })
+    })
+
+    test('should return null when the gasfree transfer has no on-chain hash yet', async () => {
+      fetchMock.mockImplementation((url) => {
+        if (url.includes('/api/v1/address/')) {
+          return mockFetchResponse(GASFREE_ACCOUNT_RESPONSE)
+        }
+
+        if (url.includes(`/api/v1/gasfree/${GASFREE_TX_ID}`)) {
+          return mockFetchResponse({
+            code: 200,
+            data: { txnHash: null }
+          })
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
+      })
+
+      const info = await account.getTransaction(GASFREE_TX_ID)
+
+      expect(info).toBeNull()
+      expect(getTransactionMock).not.toHaveBeenCalled()
     })
   })
 })

@@ -63,10 +63,22 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     /**
      * Returns a transaction's receipt.
      *
+     * @deprecated Use {@link getTransaction} instead, which returns a normalized, finality-based receipt. The raw tron receipt remains available on its `receipt` property.
      * @param {string} hash - The transaction's hash.
      * @returns {Promise<TronTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
      */
     getTransactionReceipt(hash: string): Promise<TronTransactionReceipt | null>;
+    /**
+     * Returns a normalized, finality-based receipt for a gasfree transfer.
+     *
+     * @param {string} hash - The gasfree transfer's id.
+     * @returns {Promise<TronTransactionInfo | null>} The normalized receipt, or null if the transfer is not yet on-chain.
+     */
+    getTransaction(hash: string): Promise<TronTransactionInfo | null>;
+    /** @protected @type {number} */
+    protected get _defaultWaitInterval(): number;
+    /** @protected @type {number} */
+    protected get _defaultWaitTimeout(): number;
     /**
      * Returns the gasfree provider's account.
      *
@@ -95,6 +107,7 @@ export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionR
 export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
 export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
 export type TronTransactionReceipt = import("@tetherto/wdk-wallet-tron").TronTransactionReceipt;
+export type TronTransactionInfo = import("@tetherto/wdk-wallet-tron").TronTransactionInfo;
 export type TronActivationFee = import("@tetherto/wdk-wallet-tron").TronActivationFee;
 export type TronGasfreeWalletConfig = {
     /**
