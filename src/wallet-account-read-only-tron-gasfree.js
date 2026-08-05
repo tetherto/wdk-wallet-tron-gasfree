@@ -223,7 +223,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
 
     const info = await tronReadOnlyAccount.getTransaction(txHash)
 
-    return info ? { ...info, id: hash } : null
+    return info ? { ...info, hash } : null
   }
 
   /** @protected @type {number} */

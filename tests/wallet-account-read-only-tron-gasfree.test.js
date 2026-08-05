@@ -405,7 +405,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       })
 
       getTransactionMock.mockResolvedValue({
-        id: ONCHAIN_TX_HASH,
+        hash: ONCHAIN_TX_HASH,
         finality: 'final',
         success: true,
         block: 12345,
@@ -418,7 +418,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(getTransactionMock).toHaveBeenCalledWith(ONCHAIN_TX_HASH)
       expect(info).toMatchObject({
-        id: GASFREE_TX_ID,
+        hash: GASFREE_TX_ID,
         finality: 'final',
         success: true,
         confirmations: 6
