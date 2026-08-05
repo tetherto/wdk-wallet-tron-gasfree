@@ -408,7 +408,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         id: ONCHAIN_TX_HASH,
         finality: 'final',
         success: true,
-        blockRef: 12345,
+        block: 12345,
         fee: 1000n,
         confirmations: 6,
         receipt: { id: ONCHAIN_TX_HASH }
