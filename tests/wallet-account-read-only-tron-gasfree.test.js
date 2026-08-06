@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 import { TronWeb, utils } from 'tronweb'
+import { NoSuchElementError } from '@tetherto/wdk-wallet'
 
 const OWNER_ADDRESS = 'TXngH8bVadn9ZWtKBgjKQcqN1GsZ7A1jcb'
 const GASFREE_ADDRESS = 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD'
@@ -425,7 +426,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       })
     })
 
-    test('should return null when the gasfree transfer has no on-chain hash yet', async () => {
+    test('should throw NoSuchElementError when the gasfree transfer has no on-chain hash yet', async () => {
       fetchMock.mockImplementation((url) => {
         if (url.includes('/api/v1/address/')) {
           return mockFetchResponse(GASFREE_ACCOUNT_RESPONSE)
@@ -441,9 +442,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
       })
 
-      const info = await account.getTransaction(GASFREE_TX_ID)
-
-      expect(info).toBeNull()
+      await expect(account.getTransaction(GASFREE_TX_ID)).rejects.toThrow(NoSuchElementError)
       expect(getTransactionMock).not.toHaveBeenCalled()
     })
   })

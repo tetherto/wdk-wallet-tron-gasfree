@@ -16,7 +16,7 @@
 
 import { createHmac } from 'crypto'
 
-import { WalletAccountReadOnly } from '@tetherto/wdk-wallet'
+import { WalletAccountReadOnly, NoSuchElementError } from '@tetherto/wdk-wallet'
 
 import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
@@ -210,7 +210,8 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * Returns a normalized, finality-based receipt for a gasfree transfer.
    *
    * @param {string} hash - The gasfree transfer's id.
-   * @returns {Promise<TronTransactionInfo | null>} The normalized receipt, or null if the transfer is not yet on-chain.
+   * @returns {Promise<TronTransactionInfo>} The normalized receipt.
+   * @throws {NoSuchElementError} If no transfer has been found for the given hash.
    */
   async getTransaction (hash) {
     const tronReadOnlyAccount = await this._getTronReadOnlyAccount()
@@ -218,12 +219,12 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     const txHash = await this._getTokenTransferHash(hash)
 
     if (!txHash) {
-      return null
+      throw new NoSuchElementError(`No transfer found for '${hash}'.`)
     }
 
     const info = await tronReadOnlyAccount.getTransaction(txHash)
 
-    return info ? { ...info, hash } : null
+    return { ...info, hash }
   }
 
   /** @protected @type {number} */

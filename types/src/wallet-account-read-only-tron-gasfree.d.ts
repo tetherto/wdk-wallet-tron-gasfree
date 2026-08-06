@@ -72,9 +72,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * Returns a normalized, finality-based receipt for a gasfree transfer.
      *
      * @param {string} hash - The gasfree transfer's id.
-     * @returns {Promise<TronTransactionInfo | null>} The normalized receipt, or null if the transfer is not yet on-chain.
+     * @returns {Promise<TronTransactionInfo>} The normalized receipt.
+     * @throws {NoSuchElementError} If no transfer has been found for the given hash.
      */
-    getTransaction(hash: string): Promise<TronTransactionInfo | null>;
+    getTransaction(hash: string): Promise<TronTransactionInfo>;
     /** @protected @type {number} */
     protected get _defaultWaitInterval(): number;
     /** @protected @type {number} */
