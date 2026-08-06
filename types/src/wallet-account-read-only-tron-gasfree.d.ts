@@ -77,9 +77,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      */
     getTransaction(hash: string): Promise<TronTransactionInfo>;
     /** @protected @type {number} */
-    protected get _defaultWaitInterval(): number;
-    /** @protected @type {number} */
-    protected get _defaultWaitTimeout(): number;
+    protected static _DEFAULT_WAIT_TIMEOUT: number;
     /**
      * Returns the gasfree provider's account.
      *
