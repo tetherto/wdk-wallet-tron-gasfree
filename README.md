@@ -529,6 +529,8 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: bigint}>` |
+| `getTransaction(hash)` | Returns a normalized, finality-based transaction receipt | `Promise<TronTransactionInfo>` |
+| `waitForTransaction(hash, options?)` | Polls until the transaction reaches the target finality (or times out) | `Promise<TronTransactionInfo>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 
 ##### `getBalance()`
@@ -581,6 +583,41 @@ if (quote.activationFee) {
   console.log('Activation fee:', quote.activationFee)
 }
 console.log('Estimated fee in USDT:', Number(quote.fee) / 1e6)
+```
+
+##### `getTransaction(hash)`
+Returns a normalized, finality-based receipt that maps Tron's native state onto a common cross-chain shape (`finality`, `success`, `block`, `fee`, plus the raw transaction).
+
+**Parameters:**
+- `hash` (string): The transaction hash
+
+**Returns:** `Promise<TronTransactionInfo>` - The normalized receipt
+
+**Throws:** `NoSuchElementError` if no transaction is found for the given hash.
+
+**Example:**
+```javascript
+const receipt = await readOnlyAccount.getTransaction('abc123...')
+console.log(receipt.finality, receipt.success)
+```
+
+##### `waitForTransaction(hash, options?)`
+Polls `getTransaction` until the transaction reaches the requested finality target, then returns the terminal receipt. Only throws on timeout — callers inspect `finality`/`success` on the returned receipt rather than catching errors for failed or dropped transactions.
+
+**Parameters:**
+- `hash` (string): The transaction hash
+- `options` (object, optional):
+  - `target` (string, optional): `'confirmed'` or `'final'` (default: `'confirmed'`)
+  - `timeout` (number, optional): Total time budget in ms (default: `120000`)
+  - `interval` (number, optional): Poll cadence in ms (default: `4000`)
+
+**Returns:** `Promise<TronTransactionInfo>` - The terminal receipt once the target is reached
+
+**Throws:** `TimeoutError` if the target is not reached before the timeout.
+
+**Example:**
+```javascript
+const receipt = await readOnlyAccount.waitForTransaction('abc123...', { target: 'final' })
 ```
 
 ##### `verify(message, signature)`
