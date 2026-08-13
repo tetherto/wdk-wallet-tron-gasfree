@@ -72,12 +72,25 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * Returns a normalized, finality-based receipt for a gasfree transfer.
      *
      * @param {string} hash - The gasfree transfer's id.
-     * @returns {Promise<TronTransactionInfo>} The normalized receipt.
+     * @returns {Promise<TransactionReceipt & TronGasfreeTransactionDetails>} The normalized receipt.
      * @throws {NoSuchElementError} If no transfer has been found for the given hash.
      */
-    getTransaction(hash: string): Promise<TronTransactionInfo>;
-    /** @protected @type {number} */
-    protected static _DEFAULT_WAIT_TIMEOUT: number;
+    getTransaction(hash: string): Promise<TransactionReceipt & TronGasfreeTransactionDetails>;
+    /**
+     * Blocks until a transaction reaches a terminal state (the requested finality target or `dropped`), or times out.
+     *
+     * @param {string} hash - The gasfree transfer's id.
+     * @param {WaitForTransactionOptions} [options] - The wait options.
+     * @returns {Promise<TransactionReceipt & TronGasfreeTransactionDetails>} The terminal receipt: the finality target reached (inspect `success` to tell success from revert), or `dropped`.
+     * @throws {TimeoutError} If the target is not reached before the timeout.
+     */
+    waitForTransaction(hash: string, options?: WaitForTransactionOptions): Promise<TransactionReceipt & TronGasfreeTransactionDetails>;
+    /**
+     * Overrides the base default to allow for the gasfree provider's relay and tron confirmation latency.
+     *
+     * @type {number}
+     */
+    get defaultWaitTimeout(): number;
     /**
      * Returns the gasfree provider's account.
      *
@@ -106,8 +119,22 @@ export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionR
 export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
 export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
 export type TronTransactionReceipt = import("@tetherto/wdk-wallet-tron").TronTransactionReceipt;
-export type TronTransactionInfo = import("@tetherto/wdk-wallet-tron").TronTransactionInfo;
 export type TronActivationFee = import("@tetherto/wdk-wallet-tron").TronActivationFee;
+export type TransactionReceipt = import("@tetherto/wdk-wallet").TransactionReceipt;
+export type WaitForTransactionOptions = import("@tetherto/wdk-wallet").WaitForTransactionOptions;
+/**
+ * The tron-specific fields added to a normalized transaction receipt.
+ */
+export type TronGasfreeTransactionDetails = {
+    /**
+     * - The confirmation depth, or null while it can't be resolved.
+     */
+    confirmations: number | null;
+    /**
+     * - The native tron receipt, or null while the transaction is pending or dropped.
+     */
+    receipt: TronTransactionReceipt | null;
+};
 export type TronGasfreeWalletConfig = {
     /**
      * - The blockchain's id.
