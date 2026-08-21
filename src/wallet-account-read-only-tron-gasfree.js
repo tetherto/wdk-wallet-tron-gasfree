@@ -16,7 +16,7 @@
 
 import { createHmac } from 'crypto'
 
-import { WalletAccountReadOnly } from '@tetherto/wdk-wallet'
+import { WalletAccountReadOnly, NoSuchElementError } from '@tetherto/wdk-wallet'
 
 import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
@@ -29,6 +29,17 @@ import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronActivationFee } TronActivationFee */
+
+/** @typedef {import('@tetherto/wdk-wallet').TransactionReceipt} TransactionReceipt */
+/** @typedef {import('@tetherto/wdk-wallet').WaitForTransactionOptions} WaitForTransactionOptions */
+
+/**
+ * The tron-specific fields added to a normalized transaction receipt.
+ *
+ * @typedef {Object} TronGasfreeTransactionDetails
+ * @property {number | null} confirmations - The confirmation depth, or null while it can't be resolved.
+ * @property {TronTransactionReceipt | null} receipt - The native tron receipt, or null while the transaction is pending or dropped.
+ */
 
 /**
  * @typedef {Object} TronGasfreeWalletConfig
@@ -191,6 +202,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   /**
    * Returns a transaction's receipt.
    *
+   * @deprecated Use {@link getTransaction} instead, which returns a normalized, finality-based receipt. The raw tron receipt remains available on its `receipt` property.
    * @param {string} hash - The transaction's hash.
    * @returns {Promise<TronTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
    */
@@ -202,6 +214,48 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     return txHash
       ? await tronReadOnlyAccount.getTransactionReceipt(txHash)
       : null
+  }
+
+  /**
+   * Returns a normalized, finality-based receipt for a gasfree transfer.
+   *
+   * @param {string} hash - The gasfree transfer's id.
+   * @returns {Promise<TransactionReceipt & TronGasfreeTransactionDetails>} The normalized receipt.
+   * @throws {NoSuchElementError} If no transfer has been found for the given hash.
+   */
+  async getTransaction (hash) {
+    const tronReadOnlyAccount = await this._getTronReadOnlyAccount()
+
+    const txHash = await this._getTokenTransferHash(hash)
+
+    if (!txHash) {
+      throw new NoSuchElementError(`No transfer found for '${hash}'.`)
+    }
+
+    const info = await tronReadOnlyAccount.getTransaction(txHash)
+
+    return { ...info, hash }
+  }
+
+  /**
+   * Blocks until a transaction reaches a terminal state (the requested finality target or `dropped`), or times out.
+   *
+   * @param {string} hash - The gasfree transfer's id.
+   * @param {WaitForTransactionOptions} [options] - The wait options.
+   * @returns {Promise<TransactionReceipt & TronGasfreeTransactionDetails>} The terminal receipt: the finality target reached (inspect `success` to tell success from revert), or `dropped`.
+   * @throws {TimeoutError} If the target is not reached before the timeout.
+   */
+  async waitForTransaction (hash, options = {}) {
+    return await super.waitForTransaction(hash, options)
+  }
+
+  /**
+   * Overrides the base default to allow for the gasfree provider's relay and tron confirmation latency.
+   *
+   * @type {number}
+   */
+  get defaultWaitTimeout () {
+    return 120000
   }
 
   /**
