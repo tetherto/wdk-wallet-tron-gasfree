@@ -30,7 +30,7 @@ export default class WalletManagerTronGasfree extends WalletManager {
   /**
    * Creates a new wallet manager for the tron blockchain that implements gasfree features.
    *
-   * @param {string | Uint8Array} seed - The wallet's [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) seed phrase.
+   * @param {string | Uint8Array} seed - A [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonic seed phrase, or a raw BIP-32 master seed (16-64 bytes).
    * @param {TronGasfreeWalletConfig} config - The configuration object.
    */
   constructor (seed, config) {
