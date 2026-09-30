@@ -7,7 +7,7 @@
 
 **Note**: This package is currently in beta. Please test thoroughly in development environments before using in production.
 
-A TRON wallet module for TRC20 transfers through a GasFree service provider. It derives TRON accounts from BIP-39 seed phrases, resolves their GasFree addresses, quotes provider fees, and submits signed transfer authorizations without requiring users to hold TRX for network resources.
+A TRON wallet module for TRC20 transfers through a GasFree service provider, part of WDK (Wallet Development Kit) by Tether. It derives TRON accounts from BIP-39 seed phrases, resolves their GasFree addresses, quotes provider fees, and submits signed transfer authorizations without requiring users to hold TRX for network resources.
 
 ## About WDK
 
