@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globa
 import * as bip39 from 'bip39'
 import { TronWeb, utils, Trx } from 'tronweb'
 
+import { DisposalError } from '@tetherto/wdk-wallet'
+
 const SEED_PHRASE = 'cook voyage document eight skate token alien guide drink uncle term abuse'
 const SEED = bip39.mnemonicToSeedSync(SEED_PHRASE)
 
@@ -115,6 +117,27 @@ describe('WalletAccountTronGasfree', () => {
     test('should throw if the path is invalid', () => {
       expect(() => { new WalletAccountTronGasfree(SEED_PHRASE, "a'/b/c", CONFIG) })
         .toThrow('invalid child index')
+    })
+  })
+
+  describe('dispose', () => {
+    test('should expose the disposed state', () => {
+      const testAccount = new WalletAccountTronGasfree(SEED_PHRASE, "0'/0/0", CONFIG)
+
+      expect(testAccount.disposed).toBe(false)
+
+      testAccount.dispose()
+
+      expect(testAccount.disposed).toBe(true)
+    })
+
+    test('should throw DisposalError from sign and transfer once disposed', async () => {
+      const testAccount = new WalletAccountTronGasfree(SEED_PHRASE, "0'/0/0", CONFIG)
+
+      testAccount.dispose()
+
+      await expect(testAccount.sign('message')).rejects.toThrow(DisposalError)
+      await expect(testAccount.transfer({ token: 'T', recipient: 'T', amount: 1n })).rejects.toThrow(DisposalError)
     })
   })
 

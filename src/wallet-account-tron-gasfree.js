@@ -14,6 +14,8 @@
 
 'use strict'
 
+import { DisposalError } from '@tetherto/wdk-wallet'
+
 import { WalletAccountTron } from '@tetherto/wdk-wallet-tron'
 
 import { secp256k1 } from '@noble/curves/secp256k1'
@@ -78,6 +80,18 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
 
     /** @private */
     this._ownerAccount = ownerAccount
+
+    /** @private */
+    this._disposed = false
+  }
+
+  /**
+   * True if the account has been disposed.
+   *
+   * @type {boolean}
+   */
+  get disposed () {
+    return this._disposed
   }
 
   /**
@@ -116,8 +130,13 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    *
    * @param {string} message - The message to sign.
    * @returns {Promise<string>} The message's signature.
+   * @throws {DisposalError} If the account has been disposed.
    */
   async sign (message) {
+    if (this.disposed) {
+      throw new DisposalError('The account has been disposed.')
+    }
+
     return await this._ownerAccount.sign(message)
   }
 
@@ -149,8 +168,13 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
    * @returns {Promise<TransferResult & TronActivationFee>} The transfer's result.
    * @throws {Error} If the transfer's cost exceeds the maximum transfer fee option.
+   * @throws {DisposalError} If the account has been disposed.
    */
   async transfer ({ token, recipient, amount }, config = {}) {
+    if (this.disposed) {
+      throw new DisposalError('The account has been disposed.')
+    }
+
     const address = await this._ownerAccount.getAddress()
 
     const gasFreeAccount = await this._getGasfreeAccount()
@@ -219,7 +243,11 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * Disposes the wallet account, erasing the private key from the memory.
    */
   dispose () {
+    if (this._disposed) return
+
     this._ownerAccount.dispose()
+
+    this._disposed = true
   }
 
   /** @private */
