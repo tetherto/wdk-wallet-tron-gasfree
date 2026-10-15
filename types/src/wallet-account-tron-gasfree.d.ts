@@ -17,6 +17,14 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     protected _config: TronGasfreeWalletConfig;
     /** @private */
     private _ownerAccount;
+    /** @private */
+    private _disposed;
+    /**
+     * True if the account has been disposed.
+     *
+     * @type {boolean}
+     */
+    get disposed(): boolean;
     /**
      * The derivation path's index of this account.
      *
@@ -44,6 +52,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      *
      * @param {string} message - The message to sign.
      * @returns {Promise<string>} The message's signature.
+     * @throws {DisposalError} If the account has been disposed.
      */
     sign(message: string): Promise<string>;
     /**
@@ -68,6 +77,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
      * @returns {Promise<TransferResult & TronActivationFee>} The transfer's result.
      * @throws {Error} If the transfer's cost exceeds the maximum transfer fee option.
+     * @throws {DisposalError} If the account has been disposed.
      */
     transfer({ token, recipient, amount }: TransferOptions, config?: {
         transferMaxFee?: number | bigint;

@@ -14,7 +14,7 @@
 
 'use strict'
 
-import WalletManager from '@tetherto/wdk-wallet'
+import WalletManager, { DisposalError } from '@tetherto/wdk-wallet'
 
 import WalletManagerTron, { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
@@ -61,6 +61,7 @@ export default class WalletManagerTronGasfree extends WalletManager {
    * const account = await wallet.getAccount(1);
    * @param {number} [index] - The index of the account to get (default: 0).
    * @returns {Promise<WalletAccountTronGasfree>} The account.
+   * @throws {DisposalError} If the wallet manager has been disposed.
    */
   async getAccount (index = 0) {
     return await this.getAccountByPath(`0'/0/${index}`)
@@ -74,8 +75,13 @@ export default class WalletManagerTronGasfree extends WalletManager {
    * const account = await wallet.getAccountByPath("0'/0/1");
    * @param {string} path - The derivation path (e.g. "0'/0/0").
    * @returns {Promise<WalletAccountTronGasfree>} The account.
+   * @throws {DisposalError} If the wallet manager has been disposed.
    */
   async getAccountByPath (path) {
+    if (this.disposed) {
+      throw new DisposalError('The wallet manager has been disposed.')
+    }
+
     if (!this._accounts[path]) {
       const account = new WalletAccountTronGasfree(this.seed, path, this._accountConfig())
 
