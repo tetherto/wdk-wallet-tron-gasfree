@@ -133,9 +133,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @throws {DisposalError} If the account has been disposed.
    */
   async sign (message) {
-    if (this.disposed) {
-      throw new DisposalError('The account has been disposed.')
-    }
+    this._guardDisposed()
 
     return await this._ownerAccount.sign(message)
   }
@@ -171,9 +169,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @throws {DisposalError} If the account has been disposed.
    */
   async transfer ({ token, recipient, amount }, config = {}) {
-    if (this.disposed) {
-      throw new DisposalError('The account has been disposed.')
-    }
+    this._guardDisposed()
 
     const address = await this._ownerAccount.getAddress()
 
@@ -263,5 +259,12 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     const v = (signature.recovery + 27).toString(16).padStart(2, '0')
 
     return '0x' + r + s + v
+  }
+
+  /** @private */
+  _guardDisposed () {
+    if (this.disposed) {
+      throw new DisposalError('The account has been disposed.')
+    }
   }
 }

@@ -94,6 +94,8 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     dispose(): void;
     /** @private */
     private _signTypedData;
+    /** @private */
+    private _guardDisposed;
 }
 export type IWalletAccount = import("@tetherto/wdk-wallet").IWalletAccount;
 export type KeyPair = import("@tetherto/wdk-wallet-tron").KeyPair;
