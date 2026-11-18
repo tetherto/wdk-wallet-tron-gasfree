@@ -16,6 +16,13 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     /** @private */
     private _ownerAccountAddress;
     /**
+     * Returns the account's address: the GasFree account of its owner. With an official GasFree controller as the
+     * `verifyingContract`, it is derived locally from the owner's address; with any other, it is read from the GasFree provider.
+     *
+     * @returns {Promise<string>} The GasFree account's address.
+     */
+    getAddress(): Promise<string>;
+    /**
      * Returns the account's tronix balance.
      *
      * @returns {Promise<bigint>} The tronix balance (in suns).

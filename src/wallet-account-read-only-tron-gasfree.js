@@ -20,6 +20,10 @@ import { WalletAccountReadOnly, NoSuchElementError } from '@tetherto/wdk-wallet'
 
 import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
+import { TronWeb, utils } from 'tronweb'
+
+import { GASFREE_CONTRACTS } from './gasfree-contracts.js'
+
 /** @typedef {import('tronweb').TronWeb } TronWeb */
 
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
@@ -78,6 +82,16 @@ import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 const TRON_CHAIN_ID = 728126428
 const NILE_CHAIN_ID = 3448148188
 
+/**
+ * The byte TRON puts in front of a CREATE2 preimage, where ethereum puts 0xff.
+ */
+const TRON_CREATE2_PREFIX = '0x41'
+
+/**
+ * The byte TRON puts in front of a 20-byte address.
+ */
+const TRON_ADDRESS_PREFIX = '41'
+
 export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadOnly {
   /**
    * Creates a new read-only tron gasfree wallet account.
@@ -106,7 +120,19 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     this._ownerAccountAddress = address
   }
 
+  /**
+   * Returns the account's address: the GasFree account of its owner. With an official GasFree controller as the
+   * `verifyingContract`, it is derived locally from the owner's address; with any other, it is read from the GasFree provider.
+   *
+   * @returns {Promise<string>} The GasFree account's address.
+   */
   async getAddress () {
+    const contracts = GASFREE_CONTRACTS[Number(this._config.chainId)]
+
+    if (contracts && TronWeb.address.toHex(contracts.controller) === TronWeb.address.toHex(this._config.verifyingContract).toLowerCase()) {
+      return this._deriveGasFreeAddress(contracts)
+    }
+
     const { gasFreeAddress } = await this._getGasfreeAccount()
 
     return gasFreeAddress
@@ -329,6 +355,19 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     }
 
     return response
+  }
+
+  /** @private */
+  _deriveGasFreeAddress ({ controller, beacon, creationCode }) {
+    const { keccak256, AbiCoder, concat, id } = utils.ethersUtils
+    const toEvmAddress = (tronAddress) => '0x' + TronWeb.address.toHex(tronAddress).slice(TRON_ADDRESS_PREFIX.length)
+
+    const salt = '0x' + toEvmAddress(this._ownerAccountAddress).slice(2).padStart(64, '0')
+    const initializer = id('initialize(address)').slice(0, 10) + salt.slice(2)
+    const bytecode = concat([creationCode, AbiCoder.defaultAbiCoder().encode(['address', 'bytes'], [toEvmAddress(beacon), initializer])])
+    const hash = keccak256(concat([TRON_CREATE2_PREFIX, toEvmAddress(controller), salt, keccak256(bytecode)]))
+
+    return TronWeb.address.fromHex(TRON_ADDRESS_PREFIX + hash.slice(-40))
   }
 
   /** @private */

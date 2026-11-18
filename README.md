@@ -63,7 +63,7 @@ try {
 
 - **GasFree TRC20 Transfers**: Quote fees and submit provider-backed token transfers without requiring TRX for network resources
 - **BIP-44 Account Derivation**: Derive multiple TRON accounts from one BIP-39 seed phrase
-- **GasFree Address Resolution**: Resolve the provider-managed GasFree address associated with an owner account
+- **GasFree Address Derivation**: Derive the GasFree address of an owner account locally for the official mainnet and Nile controllers, without trusting the GasFree provider
 - **TRX and TRC20 Balances**: Query native and token balances for owned or read-only accounts
 - **Per-Transfer Fee Caps**: Reject a transfer when its quoted provider fee exceeds `transferMaxFee`
 - **Message Signing**: Sign messages and verify signatures with TRON accounts

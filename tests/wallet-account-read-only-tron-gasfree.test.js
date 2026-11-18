@@ -90,7 +90,46 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
   })
 
   describe('getAddress', () => {
-    test('should return the gasfree address from the provider', async () => {
+    test('should derive the gasfree address locally for the official mainnet controller', async () => {
+      const mainnetAccount = new WalletAccountReadOnlyTronGasfree('TMeG5oVceWccnRySWGX2Wv21z1sEcGtFby', {
+        ...CONFIG,
+        chainId: 728126428,
+        verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U'
+      })
+
+      const address = await mainnetAccount.getAddress()
+
+      expect(address).toBe('TXAktrr8bmUtqbTudLiGRUDXRa5gp932G8')
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    test('should derive the gasfree address locally for the official nile controller', async () => {
+      const nileAccount = new WalletAccountReadOnlyTronGasfree('TVWcKTSDPtP5gELDssPxH2qBowPgYHG71X', {
+        ...CONFIG,
+        chainId: 3448148188,
+        verifyingContract: 'THQGuFzL87ZqhxkgqYEryRAd7gqFqL5rdc'
+      })
+
+      const address = await nileAccount.getAddress()
+
+      expect(address).toBe('TPLusMKuTYSFSUfcJ8cKgkv8YuXQRK51V5')
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    test('should derive the gasfree address locally when the official controller is given in hex', async () => {
+      const mainnetAccount = new WalletAccountReadOnlyTronGasfree('TMeG5oVceWccnRySWGX2Wv21z1sEcGtFby', {
+        ...CONFIG,
+        chainId: 728126428,
+        verifyingContract: '4139DD12A54E2BAB7C82AA14A1E158B34263D2D510'
+      })
+
+      const address = await mainnetAccount.getAddress()
+
+      expect(address).toBe('TXAktrr8bmUtqbTudLiGRUDXRa5gp932G8')
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    test('should return the gasfree address from the provider when the verifying contract is not an official controller', async () => {
       const address = await account.getAddress()
 
       expect(address).toBe(GASFREE_ADDRESS)
@@ -173,6 +212,22 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(getBalanceMock).toHaveBeenCalledWith(GASFREE_ADDRESS)
       expect(balance).toBe(1_000_000_000n)
+    })
+
+    test('should return the balance of the locally derived gasfree account for an official controller', async () => {
+      const mainnetAccount = new WalletAccountReadOnlyTronGasfree('TMeG5oVceWccnRySWGX2Wv21z1sEcGtFby', {
+        ...CONFIG,
+        chainId: 728126428,
+        verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U'
+      })
+
+      getBalanceMock.mockResolvedValue(1_000_000_000n)
+
+      const balance = await mainnetAccount.getBalance()
+
+      expect(getBalanceMock).toHaveBeenCalledWith('TXAktrr8bmUtqbTudLiGRUDXRa5gp932G8')
+      expect(balance).toBe(1_000_000_000n)
+      expect(fetchMock).not.toHaveBeenCalled()
     })
   })
 
