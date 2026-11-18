@@ -82,7 +82,7 @@ try {
 
 - This module supports GasFree TRC20 transfers. Native `quoteSendTransaction()`, `signTransaction()`, and `sendTransaction()` calls are unsupported; use [`@tetherto/wdk-wallet-tron`](https://github.com/tetherto/wdk-wallet-tron) when you need native TRX transactions.
 - Retrieve `serviceProvider` from the selected provider and use the verifying-contract address for the target network. Do not substitute one address for the other.
-- Pass `transferMaxFee` in the second argument to `account.transfer()` when a transfer needs a fee cap. The current runtime does not use the constructor-level field as a default.
+- Set `transferMaxFee` in the wallet configuration to cap the provider fee of every transfer, or pass it in the second argument to `account.transfer()` to override it for one call.
 - Supply `gasFreeApiKey` and `gasFreeApiSecret` together when authenticated requests are required. Never embed the API secret in browser, mobile, or distributed desktop code.
 - Verify token addresses, recipients, amounts, provider fees, and any first-transfer activation fee before submitting an authorization.
 

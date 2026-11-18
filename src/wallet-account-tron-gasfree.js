@@ -146,18 +146,20 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    *
    * @param {TransferOptions} options - The transfer's options.
    * @param {Object} [config] - A configuration object containing additional options.
-   * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
+   * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation (default: the `transferMaxFee` the wallet was configured with).
    * @returns {Promise<TransferResult & TronActivationFee>} The transfer's result.
    * @throws {Error} If the transfer's cost exceeds the maximum transfer fee option.
    */
-  async transfer ({ token, recipient, amount }, config = {}) {
+  async transfer ({ token, recipient, amount }, config) {
+    const { transferMaxFee = this._config.transferMaxFee } = config ?? {}
+
     const address = await this._ownerAccount.getAddress()
 
     const gasFreeAccount = await this._getGasfreeAccount()
 
     const { fee: feeEstimate } = await this._quoteTransferWithAccount(gasFreeAccount, { token })
 
-    if (config.transferMaxFee !== undefined && feeEstimate > BigInt(config.transferMaxFee)) {
+    if (transferMaxFee !== undefined && feeEstimate > BigInt(transferMaxFee)) {
       throw new Error('The transfer operation exceeds the transfer max fee.')
     }
 
