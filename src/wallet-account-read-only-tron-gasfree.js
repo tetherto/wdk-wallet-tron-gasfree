@@ -22,7 +22,7 @@ import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
 import { TronWeb, utils } from 'tronweb'
 
-import { GASFREE_CONTRACTS } from './gasfree-contracts.js'
+import { GASFREE_CONTRACTS, NILE_CHAIN_ID, TRON_CHAIN_ID } from './gasfree-contracts.js'
 
 /** @typedef {import('tronweb').TronWeb } TronWeb */
 
@@ -78,9 +78,6 @@ import { GASFREE_CONTRACTS } from './gasfree-contracts.js'
  * @property {boolean} allowSubmit - Whether the account is allowed to submit transactions.
  * @property {TronGasfreeAssetInfo[]} assets - The list of supported assets and their info.
  */
-
-const TRON_CHAIN_ID = 728126428
-const NILE_CHAIN_ID = 3448148188
 
 /**
  * The byte TRON puts in front of a CREATE2 preimage, where ethereum puts 0xff.

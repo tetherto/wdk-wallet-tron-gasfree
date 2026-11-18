@@ -116,6 +116,8 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      */
     protected _sendRequestToGasfreeProvider(method: string, path: string, body?: any): Promise<Response>;
     /** @private */
+    private _deriveGasFreeAddress;
+    /** @private */
     private _getTronReadOnlyAccount;
     /** @private */
     private _getTokenTransferHash;
