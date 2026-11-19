@@ -214,6 +214,42 @@ describe('WalletAccountTronGasfree', () => {
         .rejects.toThrow('The transfer operation exceeds the transfer max fee.')
     })
 
+    test('should throw if the transfer fee exceeds the transfer max fee of the wallet configuration', async () => {
+      const cappedAccount = new WalletAccountTronGasfree(SEED_PHRASE, "0'/0/0", { ...CONFIG, transferMaxFee: 49_999 })
+
+      mockTransferFetch()
+
+      await expect(cappedAccount.transfer(TRANSFER))
+        .rejects.toThrow('The transfer operation exceeds the transfer max fee.')
+      expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/v1/gasfree/submit'))).toBe(false)
+
+      cappedAccount.dispose()
+    })
+
+    test('should let the transfer max fee of a call override the wallet configuration', async () => {
+      const cappedAccount = new WalletAccountTronGasfree(SEED_PHRASE, "0'/0/0", { ...CONFIG, transferMaxFee: 49_999 })
+
+      mockTransferFetch()
+
+      const { hash, fee } = await cappedAccount.transfer(TRANSFER, { transferMaxFee: 50_000 })
+
+      expect(hash).toBe('gasfree-tx-id-abc123')
+      expect(fee).toBe(50_000n)
+
+      cappedAccount.dispose()
+    })
+
+    test('should keep the transfer max fee of the wallet configuration when a call leaves it undefined', async () => {
+      const cappedAccount = new WalletAccountTronGasfree(SEED_PHRASE, "0'/0/0", { ...CONFIG, transferMaxFee: 49_999 })
+
+      mockTransferFetch()
+
+      await expect(cappedAccount.transfer(TRANSFER, { transferMaxFee: undefined }))
+        .rejects.toThrow('The transfer operation exceeds the transfer max fee.')
+
+      cappedAccount.dispose()
+    })
+
     test('should throw if the gasfree provider rejects the submission', async () => {
       mockTransferFetch({
         submit: { code: 400, reason: 'Insufficient balance' }

@@ -65,7 +65,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      *
      * @param {TransferOptions} options - The transfer's options.
      * @param {Object} [config] - A configuration object containing additional options.
-     * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation.
+     * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation (default: the `transferMaxFee` the wallet was configured with).
      * @returns {Promise<TransferResult & TronActivationFee>} The transfer's result.
      * @throws {Error} If the transfer's cost exceeds the maximum transfer fee option.
      */

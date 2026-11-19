@@ -67,6 +67,32 @@ describe('WalletManagerTronGasfree', () => {
       await expect(wallet.getAccount(-1))
         .rejects.toThrow('invalid child index')
     })
+    test('should apply its transfer max fee to the accounts it returns', async () => {
+      const cappedWallet = new WalletManagerTronGasfree(SEED_PHRASE, { ...CONFIG, transferMaxFee: 49_999 })
+      const TOKEN = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+
+      const fetchMock = jest.spyOn(global, 'fetch').mockImplementation((url) => {
+        const respond = (data) => Promise.resolve({ ok: true, json: () => Promise.resolve({ code: 200, data }) })
+
+        if (url.includes('/api/v1/address/')) {
+          return respond({ gasFreeAddress: 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD', active: true, nonce: 0 })
+        }
+
+        if (url.includes('/api/v1/config/token/all')) {
+          return respond({ tokens: [{ tokenAddress: TOKEN, transferFee: 50_000, activateFee: 100_000 }] })
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
+      })
+
+      const account = await cappedWallet.getAccount()
+
+      await expect(account.transfer({ token: TOKEN, recipient: 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD', amount: 100_000_000 }))
+        .rejects.toThrow('The transfer operation exceeds the transfer max fee.')
+      expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/v1/gasfree/submit'))).toBe(false)
+
+      cappedWallet.dispose()
+    })
   })
 
   describe('getAccountByPath', () => {
