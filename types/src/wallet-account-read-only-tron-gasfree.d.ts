@@ -2,10 +2,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     /**
      * Creates a new read-only tron gasfree wallet account.
      *
-     * @param {string} address - The tron account's address.
+     * @param {string} [address] - The tron account's address. Subclasses that resolve the owner's address themselves leave it unset and override {@link _getOwnerAddress}.
      * @param {Omit<TronGasfreeWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>} config - The configuration object.
      */
-    constructor(address: string, config: Omit<TronGasfreeWalletConfig, "transferMaxFee" | "transactionMaxFee">);
+    constructor(address: string | undefined, config: Omit<TronGasfreeWalletConfig, "transferMaxFee" | "transactionMaxFee">);
     /**
      * The tron gasfree wallet account configuration.
      *
@@ -115,6 +115,13 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * @returns {Promise<Response>} The http response.
      */
     protected _sendRequestToGasfreeProvider(method: string, path: string, body?: any): Promise<Response>;
+    /**
+     * Returns the address of the tron account that owns the gasfree account.
+     *
+     * @protected
+     * @returns {Promise<string>} The owner's address.
+     */
+    protected _getOwnerAddress(): Promise<string>;
     /** @private */
     private _deriveGasFreeAddress;
     /** @private */

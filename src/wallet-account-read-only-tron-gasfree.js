@@ -93,7 +93,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   /**
    * Creates a new read-only tron gasfree wallet account.
    *
-   * @param {string} address - The tron account's address.
+   * @param {string} [address] - The tron account's address. Subclasses that resolve the owner's address themselves leave it unset and override {@link _getOwnerAddress}.
    * @param {Omit<TronGasfreeWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>} config - The configuration object.
    */
   constructor (address, config) {
@@ -127,7 +127,9 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     const contracts = GASFREE_CONTRACTS[Number(this._config.chainId)]
 
     if (contracts && TronWeb.address.toHex(contracts.controller) === TronWeb.address.toHex(this._config.verifyingContract).toLowerCase()) {
-      return this._deriveGasFreeAddress(contracts)
+      const ownerAddress = await this._getOwnerAddress()
+
+      return this._deriveGasFreeAddress(ownerAddress, contracts)
     }
 
     const { gasFreeAddress } = await this._getGasfreeAccount()
@@ -218,7 +220,9 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * @returns {Promise<boolean>} True if the signature is valid.
    */
   async verify (message, signature) {
-    const tronReadOnlyAccount = new WalletAccountReadOnlyTron(this._ownerAccountAddress, this._config)
+    const ownerAddress = await this._getOwnerAddress()
+
+    const tronReadOnlyAccount = new WalletAccountReadOnlyTron(ownerAddress, this._config)
 
     return await tronReadOnlyAccount.verify(message, signature)
   }
@@ -289,7 +293,9 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * @returns {Promise<TronGasfreeAccountInfo>} The gasfree provider's account.
    */
   async _getGasfreeAccount () {
-    const response = await this._sendRequestToGasfreeProvider('GET', `/api/v1/address/${this._ownerAccountAddress}`)
+    const ownerAddress = await this._getOwnerAddress()
+
+    const response = await this._sendRequestToGasfreeProvider('GET', `/api/v1/address/${ownerAddress}`)
 
     const resp = await response.json()
 
@@ -354,12 +360,22 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     return response
   }
 
+  /**
+   * Returns the address of the tron account that owns the gasfree account.
+   *
+   * @protected
+   * @returns {Promise<string>} The owner's address.
+   */
+  async _getOwnerAddress () {
+    return this._ownerAccountAddress
+  }
+
   /** @private */
-  _deriveGasFreeAddress ({ controller, beacon, creationCode }) {
+  _deriveGasFreeAddress (ownerAddress, { controller, beacon, creationCode }) {
     const { keccak256, AbiCoder, concat, id } = utils.ethersUtils
     const toEvmAddress = (tronAddress) => '0x' + TronWeb.address.toHex(tronAddress).slice(TRON_ADDRESS_PREFIX.length)
 
-    const salt = '0x' + toEvmAddress(this._ownerAccountAddress).slice(2).padStart(64, '0')
+    const salt = '0x' + toEvmAddress(ownerAddress).slice(2).padStart(64, '0')
     const initializer = id('initialize(address)').slice(0, 10) + salt.slice(2)
     const bytecode = concat([creationCode, AbiCoder.defaultAbiCoder().encode(['address', 'bytes'], [toEvmAddress(beacon), initializer])])
     const hash = keccak256(concat([TRON_CREATE2_PREFIX, toEvmAddress(controller), salt, keccak256(bytecode)]))

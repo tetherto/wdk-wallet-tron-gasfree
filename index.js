@@ -17,6 +17,7 @@
 /** @typedef {import('@tetherto/wdk-wallet-tron').FeeRates} FeeRates */
 
 /** @typedef {import('@tetherto/wdk-wallet-tron').KeyPair} KeyPair */
+/** @typedef {import('@tetherto/wdk-wallet-tron').SignerOptions} SignerOptions */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransactionResult} TransactionResult */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferOptions} TransferOptions */
@@ -40,3 +41,11 @@ export { default } from './src/wallet-manager-tron-gasfree.js'
 export { default as WalletAccountReadOnlyTronGasfree } from './src/wallet-account-read-only-tron-gasfree.js'
 
 export { default as WalletAccountTronGasfree } from './src/wallet-account-tron-gasfree.js'
+
+export {
+  DisposalError,
+  InvalidSignerError,
+  NoSuchElementError,
+  UnsupportedOperationError,
+  ValueError
+} from '@tetherto/wdk-wallet'

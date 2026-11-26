@@ -6,7 +6,6 @@ const SEED_PHRASE = 'cook voyage document eight skate token alien guide drink un
 const SEED = bip39.mnemonicToSeedSync(SEED_PHRASE)
 
 const ACCOUNT = {
-  index: 0,
   path: "m/44'/195'/0'/0/0",
   address: 'TXngH8bVadn9ZWtKBgjKQcqN1GsZ7A1jcb',
   keyPair: {
@@ -55,7 +54,10 @@ jest.unstable_mockModule('tronweb', () => {
   }
 })
 
-const { WalletAccountTronGasfree, WalletAccountReadOnlyTronGasfree } = await import('../index.js')
+const { WalletAccountTronGasfree, WalletAccountReadOnlyTronGasfree, DisposalError, UnsupportedOperationError, ValueError } = await import('../index.js')
+const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/index.js')
+
+const EXPECTED_TRANSFER_SIGNATURE = '1b232c9d7f980fd556727b86901741eea50b33a58f97146f46e3eacafb944531087063e112913d867e04323e6add398b00675c972b80aa54d55a1a9694e6d8931b'
 
 function mockFetchResponse (data) {
   return Promise.resolve({
@@ -88,7 +90,6 @@ describe('WalletAccountTronGasfree', () => {
 
   describe('constructor', () => {
     test('should successfully initialize an account for the given seed phrase and path', () => {
-      expect(account.index).toBe(ACCOUNT.index)
       expect(account.path).toBe(ACCOUNT.path)
       expect(account.keyPair).toEqual({
         privateKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.privateKey, 'hex')),
@@ -99,22 +100,128 @@ describe('WalletAccountTronGasfree', () => {
     test('should successfully initialize an account for the given seed and path', () => {
       const accountFromSeed = new WalletAccountTronGasfree(SEED, "0'/0/0", CONFIG)
 
-      expect(accountFromSeed.index).toBe(ACCOUNT.index)
       expect(accountFromSeed.path).toBe(ACCOUNT.path)
       expect(accountFromSeed.keyPair).toEqual({
         privateKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.privateKey, 'hex')),
         publicKey: new Uint8Array(Buffer.from(ACCOUNT.keyPair.publicKey, 'hex'))
       })
+
+      accountFromSeed.dispose()
+    })
+
+    test('should default to the first account if only a seed and a config are given', () => {
+      const firstAccount = new WalletAccountTronGasfree(SEED_PHRASE, CONFIG)
+
+      expect(firstAccount.path).toBe(ACCOUNT.path)
+
+      firstAccount.dispose()
+    })
+
+    test('should successfully initialize an account for the given signer', async () => {
+      const signer = new SeedSignerTron(SEED_PHRASE, ACCOUNT.path)
+      const signerAccount = new WalletAccountTronGasfree(signer, CONFIG)
+
+      expect(signerAccount.path).toBe(ACCOUNT.path)
+      expect(await signerAccount.sign('Dummy message to sign.')).toBe(await account.sign('Dummy message to sign.'))
     })
 
     test('should throw if the seed phrase is invalid', () => {
       expect(() => { new WalletAccountTronGasfree('invalid seed phrase', "0'/0/0", CONFIG) })
-        .toThrow('The seed phrase is invalid.')
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: 'The seed phrase is invalid.' }))
     })
 
     test('should throw if the path is invalid', () => {
       expect(() => { new WalletAccountTronGasfree(SEED_PHRASE, "a'/b/c", CONFIG) })
-        .toThrow('invalid child index')
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: 'The derivation path is not a valid BIP-32 path.' }))
+    })
+
+    test('should dispose the seed signer it built if the configuration is rejected', () => {
+      const disposeSpy = jest.spyOn(SeedSignerTron.prototype, 'dispose')
+
+      expect(() => { new WalletAccountTronGasfree(SEED_PHRASE, "0'/0/0", { ...CONFIG, gasFreeApiSecret: undefined }) })
+        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+      expect(disposeSpy).toHaveBeenCalledTimes(1)
+
+      disposeSpy.mockRestore()
+    })
+  })
+
+  describe('fromPrivateKey', () => {
+    test('should create an account backed by the given private key', async () => {
+      const keyAccount = WalletAccountTronGasfree.fromPrivateKey(ACCOUNT.keyPair.privateKey, CONFIG)
+
+      expect(keyAccount.path).toBeNull()
+      expect(await keyAccount.sign('Dummy message to sign.')).toBe(await account.sign('Dummy message to sign.'))
+
+      keyAccount.dispose()
+    })
+
+    test('should wipe the signer it created on dispose', () => {
+      const keyAccount = WalletAccountTronGasfree.fromPrivateKey(ACCOUNT.keyPair.privateKey, CONFIG)
+
+      keyAccount.dispose()
+
+      expect(keyAccount.keyPair.privateKey).toBeNull()
+    })
+
+    test('should dispose the signer it created if the configuration is rejected', () => {
+      const disposeSpy = jest.spyOn(PrivateKeySignerTron.prototype, 'dispose')
+
+      expect(() => WalletAccountTronGasfree.fromPrivateKey(ACCOUNT.keyPair.privateKey, { ...CONFIG, gasFreeApiSecret: undefined }))
+        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+      expect(disposeSpy).toHaveBeenCalledTimes(1)
+
+      disposeSpy.mockRestore()
+    })
+  })
+
+  describe('dispose', () => {
+    test('should mark the account as disposed', () => {
+      account.dispose()
+
+      expect(account.disposed).toBe(true)
+    })
+
+    test('should wipe the signer it built from a seed', () => {
+      account.dispose()
+
+      expect(account.keyPair.privateKey).toBeNull()
+    })
+
+    test('should not wipe a signer supplied by the caller', () => {
+      const signer = new SeedSignerTron(SEED_PHRASE, ACCOUNT.path)
+      const signerAccount = new WalletAccountTronGasfree(signer, CONFIG)
+
+      signerAccount.dispose()
+
+      expect(signer.disposed).toBe(false)
+    })
+
+    test('should wipe a supplied signer if the account is told to own it', () => {
+      const signer = new SeedSignerTron(SEED_PHRASE, ACCOUNT.path)
+      const signerAccount = new WalletAccountTronGasfree(signer, { ...CONFIG, shouldWipeSignerOnDisposal: true })
+
+      signerAccount.dispose()
+
+      expect(signer.disposed).toBe(true)
+    })
+
+    test('should dispose an owned signer only once when disposed twice', () => {
+      const signer = new SeedSignerTron(SEED_PHRASE, ACCOUNT.path)
+      const signerAccount = new WalletAccountTronGasfree(signer, { ...CONFIG, shouldWipeSignerOnDisposal: true })
+      const disposeSpy = jest.spyOn(signer, 'dispose')
+      signerAccount.dispose()
+
+      signerAccount.dispose()
+
+      expect(disposeSpy).toHaveBeenCalledTimes(1)
+    })
+
+    test('should throw on sign after dispose', async () => {
+      account.dispose()
+
+      await expect(account.sign('Dummy message to sign.'))
+        .rejects.toStrictEqual(new DisposalError('The wallet account has been disposed.'))
     })
   })
 
@@ -204,7 +311,49 @@ describe('WalletAccountTronGasfree', () => {
         value: TRANSFER.amount.toString(),
         nonce: GASFREE_ACCOUNT_RESPONSE.data.nonce
       }))
-      expect(submitBody.sig).toBe('1b232c9d7f980fd556727b86901741eea50b33a58f97146f46e3eacafb944531087063e112913d867e04323e6add398b00675c972b80aa54d55a1a9694e6d8931b')
+      expect(submitBody.sig).toBe(EXPECTED_TRANSFER_SIGNATURE)
+    })
+
+    test('should sign the transfer with a signer supplied by the caller', async () => {
+      jest.spyOn(Date, 'now').mockReturnValue(1700000000 * 1_000)
+      const signerAccount = new WalletAccountTronGasfree(new PrivateKeySignerTron(ACCOUNT.keyPair.privateKey), CONFIG)
+      mockTransferFetch()
+
+      await signerAccount.transfer(TRANSFER)
+
+      const submitCall = fetchMock.mock.calls.find(([url]) => url.includes('/api/v1/gasfree/submit'))
+      expect(JSON.parse(submitCall[1].body).sig).toBe(EXPECTED_TRANSFER_SIGNATURE)
+    })
+
+    test('should throw if the account has been disposed', async () => {
+      account.dispose()
+
+      await expect(account.transfer(TRANSFER))
+        .rejects.toStrictEqual(new DisposalError('The wallet account has been disposed.'))
+    })
+
+    test('should throw if a signer supplied by the caller has been disposed', async () => {
+      const signer = new PrivateKeySignerTron(ACCOUNT.keyPair.privateKey)
+      const signerAccount = new WalletAccountTronGasfree(signer, CONFIG)
+      signer.dispose()
+      mockTransferFetch()
+
+      await expect(signerAccount.transfer(TRANSFER))
+        .rejects.toStrictEqual(new DisposalError('The signer has been disposed.'))
+    })
+
+    test('should throw if the signer does not expose its private key', async () => {
+      const keylessSigner = {
+        path: null,
+        keyPair: null,
+        disposed: false,
+        getAddress: async () => ACCOUNT.address
+      }
+      const keylessAccount = new WalletAccountTronGasfree(keylessSigner, CONFIG)
+      mockTransferFetch()
+
+      await expect(keylessAccount.transfer(TRANSFER))
+        .rejects.toStrictEqual(new UnsupportedOperationError('transfer(options, config)'))
     })
 
     test('should throw if the transfer fee exceeds the transfer max fee configuration', async () => {
