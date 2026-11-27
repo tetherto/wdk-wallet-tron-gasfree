@@ -323,7 +323,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
   }
 
   /**
-   * Returns the address of the signer, which owns the gasfree account.
+   * Returns the address of the tron account that owns the gasfree account, as given by the signer.
    *
    * @protected
    * @returns {Promise<string>} The owner's address.
