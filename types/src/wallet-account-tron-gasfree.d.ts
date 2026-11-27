@@ -6,7 +6,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * The signer is wiped on {@link dispose} only if `shouldWipeSignerOnDisposal` is set.
      *
      * @overload
-     * @param {ISignerTron} signer - The tron signer, derived to an account path.
+     * @param {ISignerTron} signer - A signer implementing the tron signer interface.
      * @param {TronGasfreeWalletConfig & SignerOptions} config - The configuration object.
      */
     constructor(signer: ISignerTron, config: TronGasfreeWalletConfig & SignerOptions);
