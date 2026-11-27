@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals'
 import { TronWeb, utils } from 'tronweb'
 import { NoSuchElementError } from '@tetherto/wdk-wallet'
 
@@ -62,13 +62,34 @@ jest.unstable_mockModule('@tetherto/wdk-wallet-tron', () => {
   return { default: WalletManagerTron, WalletAccountReadOnlyTron, WalletAccountTron }
 })
 
-const { WalletAccountReadOnlyTronGasfree } = await import('../index.js')
+const { WalletAccountReadOnlyTronGasfree, UnsupportedOperationError, ValueError } = await import('../index.js')
 
 function mockFetchResponse (data) {
   return Promise.resolve({
     ok: true,
     json: () => Promise.resolve(data)
   })
+}
+
+const FIXED_TIMESTAMP = 1_700_000_000
+
+const AUTHORIZATIONS = {
+  [`GET /api/v1/address/${OWNER_ADDRESS}`]: 'ApiKey test-api-key:5wlZcP3xHCPi1r2MhHXESwSxNrihRLfs6/NXL2ocfs4=',
+  'GET /api/v1/config/token/all': 'ApiKey test-api-key:aS0hiU1rixzHoRrBt1NaZGMTu3bAh5NgMMVD+fFS02I=',
+  'GET /api/v1/gasfree/gasfree-tx-id-123': 'ApiKey test-api-key:X2YBLuyiyUfImK2NG5Um9dmR/EoJow2cNl59XCTyg7M=',
+  'GET /api/v1/gasfree/invalid-tx-id': 'ApiKey test-api-key:YyBcNDFSYO6pt3lQo5WRy1TAMNGvzHFcLSPt/kzJuOs='
+}
+
+function request (method, path) {
+  return [CONFIG.gasFreeProvider + path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Timestamp: `${FIXED_TIMESTAMP}`,
+      Authorization: AUTHORIZATIONS[`${method} ${path}`]
+    },
+    body: null
+  }]
 }
 
 describe('WalletAccountReadOnlyTronGasfree', () => {
@@ -86,8 +107,22 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
     })
 
+    jest.spyOn(Date, 'now').mockReturnValue(FIXED_TIMESTAMP * 1_000)
+
     account = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, CONFIG)
   })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  function expectRequests (...requests) {
+    expect(fetchMock).toHaveBeenCalledTimes(requests.length)
+
+    requests.forEach((args, index) => {
+      expect(fetchMock).toHaveBeenNthCalledWith(index + 1, ...args)
+    })
+  }
 
   describe('getAddress', () => {
     test('should derive the gasfree address locally for the official mainnet controller', async () => {
@@ -133,18 +168,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       const address = await account.getAddress()
 
       expect(address).toBe(GASFREE_ADDRESS)
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/v1/address/${OWNER_ADDRESS}`),
-        {
-          method: 'GET',
-          headers: {
-            Timestamp: expect.any(String),
-            Authorization: expect.stringContaining(`ApiKey ${CONFIG.gasFreeApiKey}:`),
-            'Content-Type': 'application/json'
-          },
-          body: null
-        }
-      )
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`))
     })
 
     test('should send requests without auth headers when no credentials are provided', async () => {
@@ -154,8 +178,9 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       const address = await proxyAccount.getAddress()
 
       expect(address).toBe(GASFREE_ADDRESS)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining(`/api/v1/address/${OWNER_ADDRESS}`),
+        `${CONFIG.gasFreeProvider}/api/v1/address/${OWNER_ADDRESS}`,
         {
           method: 'GET',
           headers: {
@@ -170,14 +195,35 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       const { gasFreeApiSecret, ...partialConfig } = CONFIG
 
       expect(() => new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig))
-        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: "The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together." }))
     })
 
     test('should throw if only gasFreeApiSecret is provided without gasFreeApiKey', () => {
       const { gasFreeApiKey, ...partialConfig } = CONFIG
 
       expect(() => new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig))
-        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: "The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together." }))
+    })
+  })
+
+  describe('gasfree provider errors', () => {
+    test('should throw if the gasfree provider responds with an error status', async () => {
+      fetchMock.mockImplementation(() => Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ reason: 'Unauthorized', message: 'Invalid api key' })
+      }))
+
+      await expect(account.getAddress())
+        .rejects.toThrow('Gas free provider error (Unauthorized): Invalid api key.')
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`))
+    })
+
+    test('should throw without a request if the chain is not supported by the gasfree provider', async () => {
+      const unsupportedAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, { ...CONFIG, chainId: 1 })
+
+      await expect(unsupportedAccount.getAddress())
+        .rejects.toThrow('Gas free provider does not support this chain with id 1')
+      expect(fetchMock).not.toHaveBeenCalled()
     })
   })
 
@@ -212,6 +258,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(getBalanceMock).toHaveBeenCalledWith(GASFREE_ADDRESS)
       expect(balance).toBe(1_000_000_000n)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`))
     })
 
     test('should return the balance of the locally derived gasfree account for an official controller', async () => {
@@ -241,13 +288,14 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(getTokenBalanceMock).toHaveBeenCalledWith(TOKEN_ADDRESS)
       expect(balance).toBe(1_000_000n)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`))
     })
   })
 
   describe('quoteSendTransaction', () => {
     test('should throw as not supported on tron gasfree', async () => {
       await expect(account.quoteSendTransaction({ to: OWNER_ADDRESS, value: 1000 }))
-        .rejects.toThrow("Method 'quoteSendTransaction(tx)' not supported on tron gasfree.")
+        .rejects.toStrictEqual(new UnsupportedOperationError('quoteSendTransaction(tx)'))
     })
   })
 
@@ -287,6 +335,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(fee).toBe(50_000n)
       expect(activationFee).toBe(0n)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', '/api/v1/config/token/all'))
     })
 
     test('should include activation fee when account needs activation', async () => {
@@ -320,6 +369,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(fee).toBe(150_000n)
       expect(activationFee).toBe(100_000n)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', '/api/v1/config/token/all'))
     })
 
     test('should throw when the requested token is not in the provider token list', async () => {
@@ -340,6 +390,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       await expect(account.quoteTransfer(TRANSFER))
         .rejects.toThrow(`Token ${TRANSFER.token} is not supported by the gasfree provider.`)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', '/api/v1/config/token/all'))
     })
 
     test('should throw when the token config API returns a non-200 code', async () => {
@@ -360,6 +411,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       await expect(account.quoteTransfer(TRANSFER))
         .rejects.toThrow('Internal server error')
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', '/api/v1/config/token/all'))
     })
   })
 
@@ -396,6 +448,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       expect(getTransactionReceiptMock).toHaveBeenCalledWith(ONCHAIN_TX_HASH)
       expect(receipt).toEqual(DUMMY_RECEIPT)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
     })
 
     test('should return null if the gasfree transaction has no onchain hash yet', async () => {
@@ -417,6 +470,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       const receipt = await account.getTransactionReceipt(GASFREE_TX_ID)
 
       expect(receipt).toBe(null)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
     })
 
     test('should throw when the gasfree transaction API returns a non-200 code', async () => {
@@ -437,6 +491,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
 
       await expect(account.getTransactionReceipt('invalid-tx-id'))
         .rejects.toThrow('Transaction not found')
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', '/api/v1/gasfree/invalid-tx-id'))
     })
   })
 
@@ -460,7 +515,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
       })
 
-      getTransactionMock.mockResolvedValue({
+      const DUMMY_TRANSACTION = {
         hash: ONCHAIN_TX_HASH,
         finality: 'final',
         success: true,
@@ -468,17 +523,15 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         fee: 1000n,
         confirmations: 6,
         receipt: { id: ONCHAIN_TX_HASH }
-      })
+      }
+
+      getTransactionMock.mockResolvedValue(DUMMY_TRANSACTION)
 
       const info = await account.getTransaction(GASFREE_TX_ID)
 
       expect(getTransactionMock).toHaveBeenCalledWith(ONCHAIN_TX_HASH)
-      expect(info).toMatchObject({
-        hash: GASFREE_TX_ID,
-        finality: 'final',
-        success: true,
-        confirmations: 6
-      })
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
+      expect(info).toEqual({ ...DUMMY_TRANSACTION, hash: GASFREE_TX_ID })
     })
 
     test('should throw NoSuchElementError when the gasfree transfer has no on-chain hash yet', async () => {
@@ -497,8 +550,56 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
       })
 
-      await expect(account.getTransaction(GASFREE_TX_ID)).rejects.toThrow(NoSuchElementError)
+      await expect(account.getTransaction(GASFREE_TX_ID))
+        .rejects.toStrictEqual(new NoSuchElementError(`No transfer found for '${GASFREE_TX_ID}'.`))
       expect(getTransactionMock).not.toHaveBeenCalled()
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
+    })
+  })
+
+  describe('waitForTransaction', () => {
+    const GASFREE_TX_ID = 'gasfree-tx-id-123'
+    const ONCHAIN_TX_HASH = 'onchain-tx-hash-456'
+
+    test('should return the normalized receipt once the transfer reaches the target finality', async () => {
+      const DUMMY_TRANSACTION = {
+        hash: ONCHAIN_TX_HASH,
+        finality: 'final',
+        success: true,
+        block: 12345,
+        fee: 1000n,
+        confirmations: 6,
+        receipt: { id: ONCHAIN_TX_HASH }
+      }
+
+      fetchMock.mockImplementation((url) => {
+        if (url.includes('/api/v1/address/')) {
+          return mockFetchResponse(GASFREE_ACCOUNT_RESPONSE)
+        }
+
+        if (url.includes(`/api/v1/gasfree/${GASFREE_TX_ID}`)) {
+          return mockFetchResponse({
+            code: 200,
+            data: { txnHash: ONCHAIN_TX_HASH }
+          })
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
+      })
+
+      getTransactionMock.mockResolvedValue(DUMMY_TRANSACTION)
+
+      const receipt = await account.waitForTransaction(GASFREE_TX_ID, { target: 'final' })
+
+      expect(receipt).toEqual({ ...DUMMY_TRANSACTION, hash: GASFREE_TX_ID })
+      expect(getTransactionMock).toHaveBeenCalledWith(ONCHAIN_TX_HASH)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
+    })
+  })
+
+  describe('defaultWaitTimeout', () => {
+    test('should allow two minutes for the gasfree relay and tron confirmations', () => {
+      expect(account.defaultWaitTimeout).toBe(120_000)
     })
   })
 })

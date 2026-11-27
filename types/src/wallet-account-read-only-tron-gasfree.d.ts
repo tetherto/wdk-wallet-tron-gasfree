@@ -4,6 +4,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      *
      * @param {string} address - The tron account's address.
      * @param {Omit<TronGasfreeWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>} config - The configuration object.
+     * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
      */
     constructor(address: string, config: Omit<TronGasfreeWalletConfig, "transferMaxFee" | "transactionMaxFee">);
     /**
@@ -39,9 +40,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * Quotes the costs of a send transaction operation.
      *
      * @param {TronTransaction} tx - The transaction.
-     * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
+     * @returns {Promise<never>} Never resolves; always throws.
+     * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
      */
-    quoteSendTransaction(tx: TronTransaction): Promise<Omit<TransactionResult, "hash">>;
+    quoteSendTransaction(tx: TronTransaction): Promise<never>;
     /**
      * Quotes the costs of a transfer operation.
      *
@@ -49,16 +51,6 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * @returns {Promise<Omit<TransferResult, 'hash'> & TronActivationFee>} The transfer's quotes.
      */
     quoteTransfer({ token }: TransferOptions): Promise<Omit<TransferResult, "hash"> & TronActivationFee>;
-    /**
-     * Quotes the costs of a transfer operation using a pre-fetched gasfree account.
-     *
-     * @protected
-     * @param {TronGasfreeAccountInfo} gasFreeAccount - The pre-fetched gasfree account.
-     * @param {TransferOptions} options - The transfer's options.
-     * @returns {Promise<Omit<TransferResult, 'hash'> & TronActivationFee>} The transfer's quotes.
-     * @throws {Error} If the provider doesn't support the given TRC-20 token.
-     */
-    protected _quoteTransferWithAccount(gasFreeAccount: TronGasfreeAccountInfo, options: TransferOptions): Promise<Omit<TransferResult, "hash"> & TronActivationFee>;
     /**
      * Verifies a message's signature.
      *
@@ -99,6 +91,16 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      */
     get defaultWaitTimeout(): number;
     /**
+     * Quotes the costs of a transfer operation using a pre-fetched gasfree account.
+     *
+     * @protected
+     * @param {TronGasfreeAccountInfo} gasFreeAccount - The pre-fetched gasfree account.
+     * @param {TransferOptions} options - The transfer's options.
+     * @returns {Promise<Omit<TransferResult, 'hash'> & TronActivationFee>} The transfer's quotes.
+     * @throws {Error} If the provider doesn't support the given TRC-20 token.
+     */
+    protected _quoteTransferWithAccount(gasFreeAccount: TronGasfreeAccountInfo, options: TransferOptions): Promise<Omit<TransferResult, "hash"> & TronActivationFee>;
+    /**
      * Returns the gasfree provider's account.
      *
      * @protected
@@ -111,10 +113,17 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * @protected
      * @param {string} method - The http request's method; available values: 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'.
      * @param {string} path - The http request's url's path.
-     * @param {any} [body] - The http request's body.
+     * @param {Record<string, unknown>} [body] - The JSON body to send, if any.
      * @returns {Promise<Response>} The http response.
      */
-    protected _sendRequestToGasfreeProvider(method: string, path: string, body?: any): Promise<Response>;
+    protected _sendRequestToGasfreeProvider(method: string, path: string, body?: Record<string, unknown>): Promise<Response>;
+    /**
+     * Returns the address of the tron account that owns the gasfree account.
+     *
+     * @protected
+     * @returns {Promise<string>} The owner's address.
+     */
+    protected _getOwnerAddress(): Promise<string>;
     /** @private */
     private _deriveGasFreeAddress;
     /** @private */
@@ -122,9 +131,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     /** @private */
     private _getTokenTransferHash;
 }
-export type TronWeb = import("tronweb").TronWeb;
 export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransaction;
-export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionResult;
 export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
 export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
 export type TronTransactionReceipt = import("@tetherto/wdk-wallet-tron").TronTransactionReceipt;
@@ -239,3 +246,4 @@ export type TronGasfreeAccountInfo = {
     assets: TronGasfreeAssetInfo[];
 };
 import { WalletAccountReadOnly } from '@tetherto/wdk-wallet';
+import { TronWeb } from 'tronweb';
