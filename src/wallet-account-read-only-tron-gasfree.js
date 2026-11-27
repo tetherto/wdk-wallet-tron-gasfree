@@ -311,7 +311,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * @protected
    * @param {string} method - The http request's method; available values: 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'.
    * @param {string} path - The http request's url's path.
-   * @param {any} [body] - The http request's body.
+   * @param {Record<string, unknown>} [body] - The JSON body to send, if any.
    * @returns {Promise<Response>} The http response.
    */
   async _sendRequestToGasfreeProvider (method, path, body) {
