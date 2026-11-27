@@ -63,6 +63,48 @@ const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/in
 
 const EXPECTED_TRANSFER_SIGNATURE = '1b232c9d7f980fd556727b86901741eea50b33a58f97146f46e3eacafb944531087063e112913d867e04323e6add398b00675c972b80aa54d55a1a9694e6d8931b'
 
+class KeylessSignerTron {
+  constructor (signer) {
+    this._signer = signer
+  }
+
+  get isDerivable () {
+    return this._signer.isDerivable
+  }
+
+  get path () {
+    return this._signer.path
+  }
+
+  get keyPair () {
+    return null
+  }
+
+  get disposed () {
+    return this._signer.disposed
+  }
+
+  async derive (path) {
+    return new KeylessSignerTron(await this._signer.derive(path))
+  }
+
+  async getAddress () {
+    return await this._signer.getAddress()
+  }
+
+  async sign (message) {
+    return await this._signer.sign(message)
+  }
+
+  async signTransaction (unsignedTx) {
+    return await this._signer.signTransaction(unsignedTx)
+  }
+
+  dispose () {
+    this._signer.dispose()
+  }
+}
+
 function mockFetchResponse (data) {
   return Promise.resolve({
     ok: true,
@@ -382,18 +424,15 @@ describe('WalletAccountTronGasfree', () => {
     })
 
     test('should throw if the signer does not expose its private key', async () => {
-      const keylessSigner = {
-        path: null,
-        keyPair: null,
-        disposed: false,
-        getAddress: async () => ACCOUNT.address
-      }
-      const keylessAccount = new WalletAccountTronGasfree(keylessSigner, CONFIG)
+      const signer = new PrivateKeySignerTron(ACCOUNT.keyPair.privateKey)
+      const keylessAccount = new WalletAccountTronGasfree(new KeylessSignerTron(signer), CONFIG)
       mockTransferFetch()
 
       await expect(keylessAccount.transfer(TRANSFER))
         .rejects.toStrictEqual(new UnsupportedOperationError('transfer(options, config)'))
       expect(fetchMock).not.toHaveBeenCalled()
+
+      signer.dispose()
     })
 
     test('should throw if the transfer fee exceeds the transfer max fee configuration', async () => {

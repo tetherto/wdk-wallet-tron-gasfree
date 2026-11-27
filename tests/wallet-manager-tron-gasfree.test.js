@@ -51,6 +51,48 @@ const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/in
 
 const UNSUPPORTED_DERIVATION_ERROR = new InvalidSignerError('The signer does not support account derivation.')
 
+class KeylessSignerTron {
+  constructor (signer) {
+    this._signer = signer
+  }
+
+  get isDerivable () {
+    return this._signer.isDerivable
+  }
+
+  get path () {
+    return this._signer.path
+  }
+
+  get keyPair () {
+    return null
+  }
+
+  get disposed () {
+    return this._signer.disposed
+  }
+
+  async derive (path) {
+    return new KeylessSignerTron(await this._signer.derive(path))
+  }
+
+  async getAddress () {
+    return await this._signer.getAddress()
+  }
+
+  async sign (message) {
+    return await this._signer.sign(message)
+  }
+
+  async signTransaction (unsignedTx) {
+    return await this._signer.signTransaction(unsignedTx)
+  }
+
+  dispose () {
+    this._signer.dispose()
+  }
+}
+
 describe('WalletManagerTronGasfree', () => {
   let wallet
 
@@ -172,20 +214,9 @@ describe('WalletManagerTronGasfree', () => {
     })
 
     test('should dispose the accounts and derived signers of a signer that does not expose its keys', async () => {
-      const keylessSigner = (signer) => ({
-        isDerivable: true,
-        path: signer.path,
-        keyPair: null,
-        get disposed () { return signer.disposed },
-        getAddress: () => signer.getAddress(),
-        sign: (message) => signer.sign(message),
-        signTransaction: (tx) => signer.signTransaction(tx),
-        derive: async (path) => keylessSigner(await signer.derive(path)),
-        dispose: () => signer.dispose()
-      })
       const rootSigner = new SeedSignerTron(SEED_PHRASE)
       const deriveSpy = jest.spyOn(rootSigner, 'derive')
-      const keylessWallet = new WalletManagerTronGasfree(keylessSigner(rootSigner), CONFIG)
+      const keylessWallet = new WalletManagerTronGasfree(new KeylessSignerTron(rootSigner), CONFIG)
       const account = await keylessWallet.getAccount(0)
 
       keylessWallet.dispose()
