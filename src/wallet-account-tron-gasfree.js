@@ -31,7 +31,6 @@ import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-ga
 /** @typedef {import('@tetherto/wdk-wallet-tron').SignerOptions} SignerOptions */
 
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
-/** @typedef {import('@tetherto/wdk-wallet-tron').TransactionResult} TransactionResult */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferOptions} TransferOptions */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronActivationFee} TronActivationFee */
@@ -222,7 +221,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * Sends a transaction.
    *
    * @param {TronTransaction} tx - The transaction.
-   * @returns {Promise<TransactionResult>} The transaction's result.
+   * @returns {Promise<never>} Never resolves; always throws.
    * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
    */
   async sendTransaction (tx) {

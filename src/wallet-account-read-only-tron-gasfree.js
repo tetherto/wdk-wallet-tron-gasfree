@@ -27,7 +27,6 @@ import { GASFREE_CONTRACTS, NILE_CHAIN_ID, TRON_CHAIN_ID } from './gasfree-contr
 /** @typedef {import('tronweb').TronWeb } TronWeb */
 
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
-/** @typedef {import('@tetherto/wdk-wallet-tron').TransactionResult} TransactionResult */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferOptions} TransferOptions */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
 
@@ -165,7 +164,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    * Quotes the costs of a send transaction operation.
    *
    * @param {TronTransaction} tx - The transaction.
-   * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
+   * @returns {Promise<never>} Never resolves; always throws.
    * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
    */
   async quoteSendTransaction (tx) {

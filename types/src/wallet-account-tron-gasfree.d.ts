@@ -106,10 +106,10 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * Sends a transaction.
      *
      * @param {TronTransaction} tx - The transaction.
-     * @returns {Promise<TransactionResult>} The transaction's result.
+     * @returns {Promise<never>} Never resolves; always throws.
      * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
      */
-    sendTransaction(tx: TronTransaction): Promise<TransactionResult>;
+    sendTransaction(tx: TronTransaction): Promise<never>;
     /**
      * Transfers a token to another address, paying gas fees with the transferred token.
      *
@@ -155,7 +155,6 @@ export type ValueError = import("@tetherto/wdk-wallet").ValueError;
 export type KeyPair = import("@tetherto/wdk-wallet-tron").KeyPair;
 export type SignerOptions = import("@tetherto/wdk-wallet-tron").SignerOptions;
 export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransaction;
-export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionResult;
 export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
 export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
 export type TronActivationFee = import("@tetherto/wdk-wallet-tron").TronActivationFee;

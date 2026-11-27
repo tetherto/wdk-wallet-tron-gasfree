@@ -40,10 +40,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      * Quotes the costs of a send transaction operation.
      *
      * @param {TronTransaction} tx - The transaction.
-     * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
+     * @returns {Promise<never>} Never resolves; always throws.
      * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
      */
-    quoteSendTransaction(tx: TronTransaction): Promise<Omit<TransactionResult, "hash">>;
+    quoteSendTransaction(tx: TronTransaction): Promise<never>;
     /**
      * Quotes the costs of a transfer operation.
      *
@@ -133,7 +133,6 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
 }
 export type TronWeb = import("tronweb").TronWeb;
 export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransaction;
-export type TransactionResult = import("@tetherto/wdk-wallet-tron").TransactionResult;
 export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
 export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
 export type TronTransactionReceipt = import("@tetherto/wdk-wallet-tron").TronTransactionReceipt;
