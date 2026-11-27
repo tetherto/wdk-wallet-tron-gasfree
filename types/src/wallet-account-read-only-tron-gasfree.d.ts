@@ -131,7 +131,6 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     /** @private */
     private _getTokenTransferHash;
 }
-export type TronWeb = import("tronweb").TronWeb;
 export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransaction;
 export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
 export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
@@ -247,3 +246,4 @@ export type TronGasfreeAccountInfo = {
     assets: TronGasfreeAssetInfo[];
 };
 import { WalletAccountReadOnly } from '@tetherto/wdk-wallet';
+import { TronWeb } from 'tronweb';

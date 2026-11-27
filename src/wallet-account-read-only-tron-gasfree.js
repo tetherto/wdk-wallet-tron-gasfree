@@ -24,8 +24,6 @@ import { TronWeb, utils } from 'tronweb'
 
 import { GASFREE_CONTRACTS, NILE_CHAIN_ID, TRON_CHAIN_ID } from './gasfree-contracts.js'
 
-/** @typedef {import('tronweb').TronWeb } TronWeb */
-
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronTransaction} TronTransaction */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferOptions} TransferOptions */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
