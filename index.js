@@ -47,6 +47,7 @@ export {
   InvalidSignerError,
   MaximumFeeExceededError,
   NoSuchElementError,
+  ProviderRequiredError,
   TimeoutError,
   UnsupportedOperationError,
   ValueError

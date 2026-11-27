@@ -46,7 +46,7 @@ jest.unstable_mockModule('tronweb', () => {
   }
 })
 
-const { default: WalletManagerTronGasfree, WalletAccountTronGasfree, DisposalError, InvalidSignerError, MaximumFeeExceededError, ValueError } = await import('../index.js')
+const { default: WalletManagerTronGasfree, WalletAccountTronGasfree, DisposalError, InvalidSignerError, MaximumFeeExceededError, ProviderRequiredError, ValueError } = await import('../index.js')
 const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/index.js')
 
 const UNSUPPORTED_DERIVATION_ERROR = new InvalidSignerError('The signer does not support account derivation.')
@@ -394,7 +394,7 @@ describe('WalletManagerTronGasfree', () => {
       const disconnectedWallet = new WalletManagerTronGasfree(SEED_PHRASE, configWithoutProvider)
 
       await expect(disconnectedWallet.getFeeRates())
-        .rejects.toThrow('The wallet must be connected to tron web to get fee rates.')
+        .rejects.toStrictEqual(new ProviderRequiredError('The wallet must be connected to tron web to get fee rates.'))
     })
   })
 })
