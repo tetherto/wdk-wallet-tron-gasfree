@@ -340,6 +340,23 @@ describe('WalletAccountTronGasfree', () => {
 
       await expect(signerAccount.transfer(TRANSFER))
         .rejects.toStrictEqual(new DisposalError('The signer has been disposed.'))
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    test('should throw if the signer is wiped while the transfer awaits the gasfree provider', async () => {
+      mockTransferFetch()
+      const respond = fetchMock.getMockImplementation()
+      fetchMock.mockImplementation((url) => {
+        if (url.includes('/api/v1/config/token/all')) {
+          account.dispose()
+        }
+
+        return respond(url)
+      })
+
+      await expect(account.transfer(TRANSFER))
+        .rejects.toStrictEqual(new DisposalError('The signer has been disposed.'))
+      expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/v1/gasfree/submit'))).toBe(false)
     })
 
     test('should throw if the signer does not expose its private key', async () => {
@@ -354,6 +371,7 @@ describe('WalletAccountTronGasfree', () => {
 
       await expect(keylessAccount.transfer(TRANSFER))
         .rejects.toStrictEqual(new UnsupportedOperationError('transfer(options, config)'))
+      expect(fetchMock).not.toHaveBeenCalled()
     })
 
     test('should throw if the transfer fee exceeds the transfer max fee configuration', async () => {

@@ -237,6 +237,8 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
   async transfer ({ token, recipient, amount }, config) {
     this._guardDisposed()
 
+    this._getTypedDataSigningKey()
+
     const { transferMaxFee = this._config.transferMaxFee } = config ?? {}
 
     const address = await this._getOwnerAddress()
@@ -340,7 +342,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
   }
 
   /** @private */
-  _signTypedData (domain, value) {
+  _getTypedDataSigningKey () {
     if (this._signer.disposed) {
       throw new DisposalError('The signer has been disposed.')
     }
@@ -350,6 +352,13 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     if (!privateKey) {
       throw new UnsupportedOperationError('transfer(options, config)')
     }
+
+    return privateKey
+  }
+
+  /** @private */
+  _signTypedData (domain, value) {
+    const privateKey = this._getTypedDataSigningKey()
 
     const messageDigest = TronWebUtils._TypedDataEncoder
       .hash(domain, PERMIT_712_TYPES, value)

@@ -140,6 +140,8 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     /** @private */
     private _guardDisposed;
     /** @private */
+    private _getTypedDataSigningKey;
+    /** @private */
     private _signTypedData;
 }
 export type IWalletAccount = import("@tetherto/wdk-wallet").IWalletAccount;
