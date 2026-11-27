@@ -117,7 +117,7 @@ export default class WalletManagerTronGasfree extends WalletManager<ISignerTron>
     /**
      * Returns the current fee rates.
      *
-     * @returns {Promise<FeeRates>} The fee rates.
+     * @returns {Promise<FeeRates>} The fee rates (in suns).
      */
     getFeeRates(): Promise<FeeRates>;
 }
