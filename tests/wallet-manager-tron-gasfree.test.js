@@ -92,6 +92,26 @@ describe('WalletManagerTronGasfree', () => {
       expect(() => new WalletManagerTronGasfree('invalid seed phrase', CONFIG))
         .toThrow(expect.objectContaining({ constructor: ValueError, message: 'The seed phrase is invalid.' }))
     })
+
+    test('should dispose the seed signer it built if the provider is rejected', () => {
+      const disposeSpy = jest.spyOn(SeedSignerTron.prototype, 'dispose')
+
+      expect(() => new WalletManagerTronGasfree(SEED_PHRASE, { ...CONFIG, provider: [] }))
+        .toThrow("The 'provider' option cannot be set to an empty list.")
+      expect(disposeSpy).toHaveBeenCalledTimes(1)
+
+      disposeSpy.mockRestore()
+    })
+
+    test('should not dispose a default signer supplied by the caller if the provider is rejected', () => {
+      const signer = new SeedSignerTron(SEED_PHRASE)
+
+      expect(() => new WalletManagerTronGasfree(signer, { ...CONFIG, provider: [] }))
+        .toThrow("The 'provider' option cannot be set to an empty list.")
+      expect(signer.disposed).toBe(false)
+
+      signer.dispose()
+    })
   })
 
   describe('dispose', () => {

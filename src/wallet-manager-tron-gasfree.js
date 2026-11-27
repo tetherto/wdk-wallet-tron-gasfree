@@ -82,13 +82,19 @@ export default class WalletManagerTronGasfree extends WalletManager {
      */
     this._config = config
 
-    /**
-     * The tron web client.
-     *
-     * @protected
-     * @type {TronWeb | undefined}
-     */
-    this._tronWeb = WalletAccountReadOnlyTron.initializeProvider(config)
+    try {
+      /**
+       * The tron web client.
+       *
+       * @protected
+       * @type {TronWeb | undefined}
+       */
+      this._tronWeb = WalletAccountReadOnlyTron.initializeProvider(config)
+    } catch (error) {
+      if (isSeed) this._defaultSigner.dispose()
+
+      throw error
+    }
   }
 
   /**
