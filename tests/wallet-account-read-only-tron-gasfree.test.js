@@ -206,6 +206,27 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
     })
   })
 
+  describe('gasfree provider errors', () => {
+    test('should throw if the gasfree provider responds with an error status', async () => {
+      fetchMock.mockImplementation(() => Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ reason: 'Unauthorized', message: 'Invalid api key' })
+      }))
+
+      await expect(account.getAddress())
+        .rejects.toThrow('Gas free provider error (Unauthorized): Invalid api key.')
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`))
+    })
+
+    test('should throw without a request if the chain is not supported by the gasfree provider', async () => {
+      const unsupportedAccount = new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, { ...CONFIG, chainId: 1 })
+
+      await expect(unsupportedAccount.getAddress())
+        .rejects.toThrow('Gas free provider does not support this chain with id 1')
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+  })
+
   describe('verify', () => {
     const MESSAGE = 'Dummy message to sign.'
     const SIGNATURE = '0x67b1e4bb9a9b070cd60776ceab1ff4d7c4d4997bb5b4a71757da646f75d847e6600c22d8d83caa13d42c33099f75ba5ec30390467392aa78a3e5319da6c30e291b'
@@ -533,6 +554,52 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         .rejects.toStrictEqual(new NoSuchElementError(`No transfer found for '${GASFREE_TX_ID}'.`))
       expect(getTransactionMock).not.toHaveBeenCalled()
       expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
+    })
+  })
+
+  describe('waitForTransaction', () => {
+    const GASFREE_TX_ID = 'gasfree-tx-id-123'
+    const ONCHAIN_TX_HASH = 'onchain-tx-hash-456'
+
+    test('should return the normalized receipt once the transfer reaches the target finality', async () => {
+      const DUMMY_TRANSACTION = {
+        hash: ONCHAIN_TX_HASH,
+        finality: 'final',
+        success: true,
+        block: 12345,
+        fee: 1000n,
+        confirmations: 6,
+        receipt: { id: ONCHAIN_TX_HASH }
+      }
+
+      fetchMock.mockImplementation((url) => {
+        if (url.includes('/api/v1/address/')) {
+          return mockFetchResponse(GASFREE_ACCOUNT_RESPONSE)
+        }
+
+        if (url.includes(`/api/v1/gasfree/${GASFREE_TX_ID}`)) {
+          return mockFetchResponse({
+            code: 200,
+            data: { txnHash: ONCHAIN_TX_HASH }
+          })
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
+      })
+
+      getTransactionMock.mockResolvedValue(DUMMY_TRANSACTION)
+
+      const receipt = await account.waitForTransaction(GASFREE_TX_ID, { target: 'final' })
+
+      expect(receipt).toEqual({ ...DUMMY_TRANSACTION, hash: GASFREE_TX_ID })
+      expect(getTransactionMock).toHaveBeenCalledWith(ONCHAIN_TX_HASH)
+      expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
+    })
+  })
+
+  describe('defaultWaitTimeout', () => {
+    test('should allow two minutes for the gasfree relay and tron confirmations', () => {
+      expect(account.defaultWaitTimeout).toBe(120_000)
     })
   })
 })

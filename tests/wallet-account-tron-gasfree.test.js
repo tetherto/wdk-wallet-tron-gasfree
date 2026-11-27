@@ -525,6 +525,22 @@ describe('WalletAccountTronGasfree', () => {
         .rejects.toThrow('Insufficient balance')
       expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'), request('POST', '/api/v1/gasfree/submit', EXPECTED_SUBMIT_BODY))
     })
+
+    test('should add the activation fee reported by the gasfree provider to the transfer fee', async () => {
+      mockTransferFetch({
+        submit: {
+          code: 200,
+          data: { id: 'gasfree-tx-id-abc123', estimatedTransferFee: 50000, estimatedActivateFee: 100000 }
+        }
+      })
+
+      const { hash, fee, activationFee } = await account.transfer(TRANSFER)
+
+      expect(hash).toBe('gasfree-tx-id-abc123')
+      expect(fee).toBe(150_000n)
+      expect(activationFee).toBe(100_000n)
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'), request('POST', '/api/v1/gasfree/submit', EXPECTED_SUBMIT_BODY))
+    })
   })
 
   describe('toReadOnlyAccount', () => {
