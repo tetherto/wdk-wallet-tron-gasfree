@@ -16,6 +16,10 @@ const ACCOUNT = {
 
 const GASFREE_ADDRESS = 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD'
 
+const MESSAGE = 'Dummy message to sign.'
+
+const EXPECTED_SIGNATURE = '0x67b1e4bb9a9b070cd60776ceab1ff4d7c4d4997bb5b4a71757da646f75d847e6600c22d8d83caa13d42c33099f75ba5ec30390467392aa78a3e5319da6c30e291b'
+
 const CONFIG = {
   chainId: 728126428,
   provider: 'https://tron.web.provider/',
@@ -122,7 +126,7 @@ describe('WalletAccountTronGasfree', () => {
       const signerAccount = new WalletAccountTronGasfree(signer, CONFIG)
 
       expect(signerAccount.path).toBe(ACCOUNT.path)
-      expect(await signerAccount.sign('Dummy message to sign.')).toBe(await account.sign('Dummy message to sign.'))
+      expect(await signerAccount.sign(MESSAGE)).toBe(EXPECTED_SIGNATURE)
     })
 
     test('should throw if the seed phrase is invalid', () => {
@@ -151,7 +155,7 @@ describe('WalletAccountTronGasfree', () => {
       const keyAccount = WalletAccountTronGasfree.fromPrivateKey(ACCOUNT.keyPair.privateKey, CONFIG)
 
       expect(keyAccount.path).toBeNull()
-      expect(await keyAccount.sign('Dummy message to sign.')).toBe(await account.sign('Dummy message to sign.'))
+      expect(await keyAccount.sign(MESSAGE)).toBe(EXPECTED_SIGNATURE)
 
       keyAccount.dispose()
     })
@@ -220,15 +224,12 @@ describe('WalletAccountTronGasfree', () => {
     test('should throw on sign after dispose', async () => {
       account.dispose()
 
-      await expect(account.sign('Dummy message to sign.'))
+      await expect(account.sign(MESSAGE))
         .rejects.toStrictEqual(new DisposalError('The wallet account has been disposed.'))
     })
   })
 
   describe('sign', () => {
-    const MESSAGE = 'Dummy message to sign.'
-    const EXPECTED_SIGNATURE = '0x67b1e4bb9a9b070cd60776ceab1ff4d7c4d4997bb5b4a71757da646f75d847e6600c22d8d83caa13d42c33099f75ba5ec30390467392aa78a3e5319da6c30e291b'
-
     test('should return the correct signature', async () => {
       const signature = await account.sign(MESSAGE)
       expect(signature).toBe(EXPECTED_SIGNATURE)
