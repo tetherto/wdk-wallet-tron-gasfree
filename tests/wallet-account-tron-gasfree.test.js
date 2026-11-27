@@ -132,6 +132,8 @@ describe('WalletAccountTronGasfree', () => {
 
   afterEach(() => {
     account.dispose()
+
+    jest.restoreAllMocks()
   })
 
   describe('constructor', () => {
@@ -169,6 +171,8 @@ describe('WalletAccountTronGasfree', () => {
 
       expect(signerAccount.path).toBe(ACCOUNT.path)
       expect(await signerAccount.sign(MESSAGE)).toBe(EXPECTED_SIGNATURE)
+
+      signer.dispose()
     })
 
     test('should throw if the seed phrase is invalid', () => {
@@ -246,6 +250,8 @@ describe('WalletAccountTronGasfree', () => {
       signerAccount.dispose()
 
       expect(signer.disposed).toBe(false)
+
+      signer.dispose()
     })
 
     test('should wipe a supplied signer if the account is told to own it', () => {
@@ -380,13 +386,16 @@ describe('WalletAccountTronGasfree', () => {
 
     test('should sign the transfer with a signer supplied by the caller', async () => {
       jest.spyOn(Date, 'now').mockReturnValue(1700000000 * 1_000)
-      const signerAccount = new WalletAccountTronGasfree(new PrivateKeySignerTron(ACCOUNT.keyPair.privateKey), CONFIG)
+      const signer = new PrivateKeySignerTron(ACCOUNT.keyPair.privateKey)
+      const signerAccount = new WalletAccountTronGasfree(signer, CONFIG)
       mockTransferFetch()
 
       await signerAccount.transfer(TRANSFER)
 
       const submitCall = fetchMock.mock.calls.find(([url]) => url.includes('/api/v1/gasfree/submit'))
       expect(JSON.parse(submitCall[1].body).sig).toBe(EXPECTED_TRANSFER_SIGNATURE)
+
+      signer.dispose()
     })
 
     test('should throw if the account has been disposed', async () => {

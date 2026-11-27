@@ -102,7 +102,13 @@ describe('WalletManagerTronGasfree', () => {
   })
 
   afterEach(() => {
+    for (const signer of Object.values(wallet.getSigners())) {
+      signer.dispose()
+    }
+
     wallet.dispose()
+
+    jest.restoreAllMocks()
   })
 
   describe('constructor', () => {
@@ -123,6 +129,9 @@ describe('WalletManagerTronGasfree', () => {
       const account = await signerWallet.getAccount(1)
 
       expect(await account.getAddress()).toBe(ACCOUNT_1_GASFREE_ADDRESS)
+
+      signerWallet.dispose()
+      signer.dispose()
     })
 
     test('should throw if the default signer is not derivable', () => {
@@ -443,6 +452,8 @@ describe('WalletManagerTronGasfree', () => {
 
       await expect(disconnectedWallet.getFeeRates())
         .rejects.toStrictEqual(new ProviderRequiredError('The wallet must be connected to tron web to get fee rates.'))
+
+      disconnectedWallet.dispose()
     })
   })
 })
