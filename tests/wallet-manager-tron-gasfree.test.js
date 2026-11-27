@@ -171,6 +171,35 @@ describe('WalletManagerTronGasfree', () => {
       expect(signer.disposed).toBe(false)
     })
 
+    test('should dispose the accounts and derived signers of a signer that does not expose its keys', async () => {
+      const keylessSigner = (signer) => ({
+        isDerivable: true,
+        path: signer.path,
+        keyPair: null,
+        get disposed () { return signer.disposed },
+        getAddress: () => signer.getAddress(),
+        sign: (message) => signer.sign(message),
+        signTransaction: (tx) => signer.signTransaction(tx),
+        derive: async (path) => keylessSigner(await signer.derive(path)),
+        dispose: () => signer.dispose()
+      })
+      const rootSigner = new SeedSignerTron(SEED_PHRASE)
+      const deriveSpy = jest.spyOn(rootSigner, 'derive')
+      const keylessWallet = new WalletManagerTronGasfree(keylessSigner(rootSigner), CONFIG)
+      const account = await keylessWallet.getAccount(0)
+
+      keylessWallet.dispose()
+
+      const derivedSigner = await deriveSpy.mock.results[0].value
+      expect(derivedSigner.disposed).toBe(true)
+      expect(account.disposed).toBe(true)
+      await expect(account.sign('message'))
+        .rejects.toStrictEqual(new DisposalError('The wallet account has been disposed.'))
+      expect(rootSigner.disposed).toBe(false)
+
+      rootSigner.dispose()
+    })
+
     test('should throw on getAccount by index after dispose', async () => {
       wallet.dispose()
 
