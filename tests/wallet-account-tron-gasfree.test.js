@@ -494,10 +494,11 @@ describe('WalletAccountTronGasfree', () => {
 
       mockTransferFetch()
 
-      const { hash, fee } = await cappedAccount.transfer(TRANSFER, { transferMaxFee: 50_000 })
+      const { hash, fee, activationFee } = await cappedAccount.transfer(TRANSFER, { transferMaxFee: 50_000 })
 
       expect(hash).toBe('gasfree-tx-id-abc123')
       expect(fee).toBe(50_000n)
+      expect(activationFee).toBe(0n)
       expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'), request('POST', '/api/v1/gasfree/submit', EXPECTED_SUBMIT_BODY))
 
       cappedAccount.dispose()

@@ -494,7 +494,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
       })
 
-      getTransactionMock.mockResolvedValue({
+      const DUMMY_TRANSACTION = {
         hash: ONCHAIN_TX_HASH,
         finality: 'final',
         success: true,
@@ -502,18 +502,15 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         fee: 1000n,
         confirmations: 6,
         receipt: { id: ONCHAIN_TX_HASH }
-      })
+      }
+
+      getTransactionMock.mockResolvedValue(DUMMY_TRANSACTION)
 
       const info = await account.getTransaction(GASFREE_TX_ID)
 
       expect(getTransactionMock).toHaveBeenCalledWith(ONCHAIN_TX_HASH)
       expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
-      expect(info).toMatchObject({
-        hash: GASFREE_TX_ID,
-        finality: 'final',
-        success: true,
-        confirmations: 6
-      })
+      expect(info).toEqual({ ...DUMMY_TRANSACTION, hash: GASFREE_TX_ID })
     })
 
     test('should throw NoSuchElementError when the gasfree transfer has no on-chain hash yet', async () => {
