@@ -1,7 +1,7 @@
 export { default } from "./src/wallet-manager-tron-gasfree.js";
 export { default as WalletAccountReadOnlyTronGasfree } from "./src/wallet-account-read-only-tron-gasfree.js";
 export { default as WalletAccountTronGasfree } from "./src/wallet-account-tron-gasfree.js";
-export { DisposalError, InvalidSignerError, NoSuchElementError, UnsupportedOperationError, ValueError } from "@tetherto/wdk-wallet";
+export { DisposalError, InvalidSignerError, NoSuchElementError, TimeoutError, UnsupportedOperationError, ValueError } from "@tetherto/wdk-wallet";
 export type FeeRates = import("@tetherto/wdk-wallet-tron").FeeRates;
 export type KeyPair = import("@tetherto/wdk-wallet-tron").KeyPair;
 export type SignerOptions = import("@tetherto/wdk-wallet-tron").SignerOptions;
