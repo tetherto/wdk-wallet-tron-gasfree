@@ -54,7 +54,7 @@ jest.unstable_mockModule('tronweb', () => {
   }
 })
 
-const { WalletAccountTronGasfree, WalletAccountReadOnlyTronGasfree, DisposalError, UnsupportedOperationError, ValueError } = await import('../index.js')
+const { WalletAccountTronGasfree, WalletAccountReadOnlyTronGasfree, DisposalError, MaximumFeeExceededError, UnsupportedOperationError, ValueError } = await import('../index.js')
 const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/index.js')
 
 const EXPECTED_TRANSFER_SIGNATURE = '1b232c9d7f980fd556727b86901741eea50b33a58f97146f46e3eacafb944531087063e112913d867e04323e6add398b00675c972b80aa54d55a1a9694e6d8931b'
@@ -139,7 +139,7 @@ describe('WalletAccountTronGasfree', () => {
       const disposeSpy = jest.spyOn(SeedSignerTron.prototype, 'dispose')
 
       expect(() => { new WalletAccountTronGasfree(SEED_PHRASE, "0'/0/0", { ...CONFIG, gasFreeApiSecret: undefined }) })
-        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: "The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together." }))
       expect(disposeSpy).toHaveBeenCalledTimes(1)
 
       disposeSpy.mockRestore()
@@ -168,7 +168,7 @@ describe('WalletAccountTronGasfree', () => {
       const disposeSpy = jest.spyOn(PrivateKeySignerTron.prototype, 'dispose')
 
       expect(() => WalletAccountTronGasfree.fromPrivateKey(ACCOUNT.keyPair.privateKey, { ...CONFIG, gasFreeApiSecret: undefined }))
-        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: "The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together." }))
       expect(disposeSpy).toHaveBeenCalledTimes(1)
 
       disposeSpy.mockRestore()
@@ -235,10 +235,17 @@ describe('WalletAccountTronGasfree', () => {
     })
   })
 
+  describe('signTransaction', () => {
+    test('should throw as not supported on tron gasfree', async () => {
+      await expect(account.signTransaction({ to: 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD', value: 1000 }))
+        .rejects.toStrictEqual(new UnsupportedOperationError('signTransaction(tx)'))
+    })
+  })
+
   describe('sendTransaction', () => {
     test('should throw as not supported on tron gasfree', async () => {
       await expect(account.sendTransaction({ to: 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD', value: 1000 }))
-        .rejects.toThrow("Method 'sendTransaction(tx)' not supported on tron gasfree.")
+        .rejects.toStrictEqual(new UnsupportedOperationError('sendTransaction(tx)'))
     })
   })
 
@@ -378,7 +385,7 @@ describe('WalletAccountTronGasfree', () => {
       mockTransferFetch()
 
       await expect(account.transfer(TRANSFER, { transferMaxFee: 0 }))
-        .rejects.toThrow('The transfer operation exceeds the transfer max fee.')
+        .rejects.toStrictEqual(new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.'))
     })
 
     test('should throw if the transfer fee exceeds the transfer max fee of the wallet configuration', async () => {
@@ -387,7 +394,7 @@ describe('WalletAccountTronGasfree', () => {
       mockTransferFetch()
 
       await expect(cappedAccount.transfer(TRANSFER))
-        .rejects.toThrow('The transfer operation exceeds the transfer max fee.')
+        .rejects.toStrictEqual(new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.'))
       expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/v1/gasfree/submit'))).toBe(false)
 
       cappedAccount.dispose()
@@ -412,7 +419,7 @@ describe('WalletAccountTronGasfree', () => {
       mockTransferFetch()
 
       await expect(cappedAccount.transfer(TRANSFER, { transferMaxFee: undefined }))
-        .rejects.toThrow('The transfer operation exceeds the transfer max fee.')
+        .rejects.toStrictEqual(new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.'))
 
       cappedAccount.dispose()
     })

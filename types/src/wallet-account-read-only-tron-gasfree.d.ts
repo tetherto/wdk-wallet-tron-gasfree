@@ -4,6 +4,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      *
      * @param {string} address - The tron account's address.
      * @param {Omit<TronGasfreeWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>} config - The configuration object.
+     * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
      */
     constructor(address: string, config: Omit<TronGasfreeWalletConfig, "transferMaxFee" | "transactionMaxFee">);
     /**
@@ -40,6 +41,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
      *
      * @param {TronTransaction} tx - The transaction.
      * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
+     * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
      */
     quoteSendTransaction(tx: TronTransaction): Promise<Omit<TransactionResult, "hash">>;
     /**

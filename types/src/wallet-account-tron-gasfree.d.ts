@@ -8,6 +8,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * @overload
      * @param {ISignerTron} signer - A signer implementing the tron signer interface.
      * @param {TronGasfreeWalletConfig & SignerOptions} config - The configuration object.
+     * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
      */
     constructor(signer: ISignerTron, config: TronGasfreeWalletConfig & SignerOptions);
     /**
@@ -18,6 +19,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * @param {string} path - The BIP-44 derivation path, relative to "m/44'/195'" (e.g. "0'/0/0").
      * @param {TronGasfreeWalletConfig} config - The configuration object.
      * @throws {ValueError} If the seed or the path is not valid.
+     * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
      */
     constructor(seed: string | Uint8Array, path: string, config: TronGasfreeWalletConfig);
     /**
@@ -27,6 +29,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * @param {string | Uint8Array} seed - A [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonic seed phrase, or a raw BIP-32 master seed (16-64 bytes).
      * @param {TronGasfreeWalletConfig} config - The configuration object.
      * @throws {ValueError} If the seed is not a valid seed or BIP-39 seed phrase.
+     * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
      */
     constructor(seed: string | Uint8Array, config: TronGasfreeWalletConfig);
     /**
@@ -37,6 +40,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * @param {TronGasfreeWalletConfig} config - The configuration object.
      * @returns {WalletAccountTronGasfree} The wallet account.
      * @throws {ValueError} If the private key is not valid.
+     * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
      */
     static fromPrivateKey(privateKey: string | Uint8Array, config: TronGasfreeWalletConfig): WalletAccountTronGasfree;
     /**
@@ -95,6 +99,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      *
      * @param {TronTransaction} tx - The transaction.
      * @returns {Promise<never>} Never resolves; always throws.
+     * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
      */
     signTransaction(tx: TronTransaction): Promise<never>;
     /**
@@ -102,6 +107,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      *
      * @param {TronTransaction} tx - The transaction.
      * @returns {Promise<TransactionResult>} The transaction's result.
+     * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
      */
     sendTransaction(tx: TronTransaction): Promise<TransactionResult>;
     /**
@@ -111,7 +117,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      * @param {Object} [config] - A configuration object containing additional options.
      * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation (default: the `transferMaxFee` the wallet was configured with).
      * @returns {Promise<TransferResult & TronActivationFee>} The transfer's result.
-     * @throws {Error} If the transfer's cost exceeds the maximum transfer fee option.
+     * @throws {MaximumFeeExceededError} If the transfer's cost exceeds the maximum transfer fee option.
      * @throws {DisposalError} If the wallet account or its signer has been disposed.
      * @throws {UnsupportedOperationError} If the account's signer does not expose its private key.
      */

@@ -14,7 +14,7 @@
 
 'use strict'
 
-import { DisposalError, UnsupportedOperationError } from '@tetherto/wdk-wallet'
+import { DisposalError, MaximumFeeExceededError, UnsupportedOperationError } from '@tetherto/wdk-wallet'
 
 import { PrivateKeySignerTron, SeedSignerTron } from '@tetherto/wdk-wallet-tron/signers'
 
@@ -74,6 +74,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @overload
    * @param {ISignerTron} signer - A signer implementing the tron signer interface.
    * @param {TronGasfreeWalletConfig & SignerOptions} config - The configuration object.
+   * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
    */
 
   /**
@@ -84,6 +85,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @param {string} path - The BIP-44 derivation path, relative to "m/44'/195'" (e.g. "0'/0/0").
    * @param {TronGasfreeWalletConfig} config - The configuration object.
    * @throws {ValueError} If the seed or the path is not valid.
+   * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
    */
 
   /**
@@ -93,6 +95,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @param {string | Uint8Array} seed - A [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonic seed phrase, or a raw BIP-32 master seed (16-64 bytes).
    * @param {TronGasfreeWalletConfig} config - The configuration object.
    * @throws {ValueError} If the seed is not a valid seed or BIP-39 seed phrase.
+   * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
    */
   constructor (seedOrSigner, pathOrConfig, config) {
     const isSeed = typeof seedOrSigner === 'string' || seedOrSigner instanceof Uint8Array
@@ -143,6 +146,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @param {TronGasfreeWalletConfig} config - The configuration object.
    * @returns {WalletAccountTronGasfree} The wallet account.
    * @throws {ValueError} If the private key is not valid.
+   * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
    */
   static fromPrivateKey (privateKey, config) {
     const signer = new PrivateKeySignerTron(privateKey)
@@ -208,9 +212,10 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    *
    * @param {TronTransaction} tx - The transaction.
    * @returns {Promise<never>} Never resolves; always throws.
+   * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
    */
   async signTransaction (tx) {
-    throw new Error("Method 'signTransaction(tx)' not supported on tron gasfree.")
+    throw new UnsupportedOperationError('signTransaction(tx)')
   }
 
   /**
@@ -218,9 +223,10 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    *
    * @param {TronTransaction} tx - The transaction.
    * @returns {Promise<TransactionResult>} The transaction's result.
+   * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
    */
   async sendTransaction (tx) {
-    throw new Error("Method 'sendTransaction(tx)' not supported on tron gasfree.")
+    throw new UnsupportedOperationError('sendTransaction(tx)')
   }
 
   /**
@@ -230,7 +236,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @param {Object} [config] - A configuration object containing additional options.
    * @param {number | bigint} [config.transferMaxFee] - The maximum fee amount for the transfer operation (default: the `transferMaxFee` the wallet was configured with).
    * @returns {Promise<TransferResult & TronActivationFee>} The transfer's result.
-   * @throws {Error} If the transfer's cost exceeds the maximum transfer fee option.
+   * @throws {MaximumFeeExceededError} If the transfer's cost exceeds the maximum transfer fee option.
    * @throws {DisposalError} If the wallet account or its signer has been disposed.
    * @throws {UnsupportedOperationError} If the account's signer does not expose its private key.
    */
@@ -248,7 +254,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
     const { fee: feeEstimate } = await this._quoteTransferWithAccount(gasFreeAccount, { token })
 
     if (transferMaxFee !== undefined && feeEstimate > BigInt(transferMaxFee)) {
-      throw new Error('The transfer operation exceeds the transfer max fee.')
+      throw new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.')
     }
 
     const timestamp = Math.floor(Date.now() / 1_000)

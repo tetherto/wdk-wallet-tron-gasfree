@@ -62,7 +62,7 @@ jest.unstable_mockModule('@tetherto/wdk-wallet-tron', () => {
   return { default: WalletManagerTron, WalletAccountReadOnlyTron, WalletAccountTron }
 })
 
-const { WalletAccountReadOnlyTronGasfree } = await import('../index.js')
+const { WalletAccountReadOnlyTronGasfree, UnsupportedOperationError, ValueError } = await import('../index.js')
 
 function mockFetchResponse (data) {
   return Promise.resolve({
@@ -170,14 +170,14 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
       const { gasFreeApiSecret, ...partialConfig } = CONFIG
 
       expect(() => new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig))
-        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: "The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together." }))
     })
 
     test('should throw if only gasFreeApiSecret is provided without gasFreeApiKey', () => {
       const { gasFreeApiKey, ...partialConfig } = CONFIG
 
       expect(() => new WalletAccountReadOnlyTronGasfree(OWNER_ADDRESS, partialConfig))
-        .toThrow("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: "The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together." }))
     })
   })
 
@@ -247,7 +247,7 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
   describe('quoteSendTransaction', () => {
     test('should throw as not supported on tron gasfree', async () => {
       await expect(account.quoteSendTransaction({ to: OWNER_ADDRESS, value: 1000 }))
-        .rejects.toThrow("Method 'quoteSendTransaction(tx)' not supported on tron gasfree.")
+        .rejects.toStrictEqual(new UnsupportedOperationError('quoteSendTransaction(tx)'))
     })
   })
 

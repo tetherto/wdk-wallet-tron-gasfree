@@ -46,7 +46,7 @@ jest.unstable_mockModule('tronweb', () => {
   }
 })
 
-const { default: WalletManagerTronGasfree, WalletAccountTronGasfree, DisposalError, InvalidSignerError, ValueError } = await import('../index.js')
+const { default: WalletManagerTronGasfree, WalletAccountTronGasfree, DisposalError, InvalidSignerError, MaximumFeeExceededError, ValueError } = await import('../index.js')
 const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/index.js')
 
 const UNSUPPORTED_DERIVATION_ERROR = new InvalidSignerError('The signer does not support account derivation.')
@@ -352,7 +352,7 @@ describe('WalletManagerTronGasfree', () => {
       const account = await cappedWallet.getAccount()
 
       await expect(account.transfer({ token: TOKEN, recipient: 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD', amount: 100_000_000 }))
-        .rejects.toThrow('The transfer operation exceeds the transfer max fee.')
+        .rejects.toStrictEqual(new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.'))
       expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/v1/gasfree/submit'))).toBe(false)
 
       cappedWallet.dispose()

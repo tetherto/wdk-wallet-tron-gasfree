@@ -45,6 +45,7 @@ export { default as WalletAccountTronGasfree } from './src/wallet-account-tron-g
 export {
   DisposalError,
   InvalidSignerError,
+  MaximumFeeExceededError,
   NoSuchElementError,
   TimeoutError,
   UnsupportedOperationError,

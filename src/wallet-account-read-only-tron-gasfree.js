@@ -16,7 +16,7 @@
 
 import { createHmac } from 'crypto'
 
-import { WalletAccountReadOnly, NoSuchElementError } from '@tetherto/wdk-wallet'
+import { WalletAccountReadOnly, NoSuchElementError, UnsupportedOperationError, ValueError } from '@tetherto/wdk-wallet'
 
 import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
@@ -95,6 +95,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    *
    * @param {string} address - The tron account's address.
    * @param {Omit<TronGasfreeWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>} config - The configuration object.
+   * @throws {ValueError} If only one of the 'gasFreeApiKey' and 'gasFreeApiSecret' options is set.
    */
   constructor (address, config) {
     super(undefined)
@@ -102,7 +103,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
     const { gasFreeApiKey, gasFreeApiSecret } = config
 
     if ((gasFreeApiKey && !gasFreeApiSecret) || (!gasFreeApiKey && gasFreeApiSecret)) {
-      throw new Error("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
+      throw new ValueError("The 'gasFreeApiKey' and the 'gasFreeApiSecret' options must be provided together.")
     }
 
     /**
@@ -165,9 +166,10 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    *
    * @param {TronTransaction} tx - The transaction.
    * @returns {Promise<Omit<TransactionResult, 'hash'>>} The transaction's quotes.
+   * @throws {UnsupportedOperationError} Always; tron gasfree accounts only support token transfers.
    */
   async quoteSendTransaction (tx) {
-    throw new Error("Method 'quoteSendTransaction(tx)' not supported on tron gasfree.")
+    throw new UnsupportedOperationError('quoteSendTransaction(tx)')
   }
 
   /**
