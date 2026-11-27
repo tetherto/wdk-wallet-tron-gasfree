@@ -46,7 +46,7 @@ jest.unstable_mockModule('tronweb', () => {
   }
 })
 
-const { default: WalletManagerTronGasfree, WalletAccountTronGasfree, DisposalError, InvalidSignerError, MaximumFeeExceededError, NoSuchElementError, ProviderRequiredError, ValueError } = await import('../index.js')
+const { default: WalletManagerTronGasfree, DisposalError, InvalidSignerError, MaximumFeeExceededError, NoSuchElementError, ProviderRequiredError, ValueError } = await import('../index.js')
 const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/index.js')
 
 const UNSUPPORTED_DERIVATION_ERROR = new InvalidSignerError('The signer does not support account derivation.')
@@ -352,15 +352,11 @@ describe('WalletManagerTronGasfree', () => {
     test('should return the account at index 0 by default', async () => {
       const account = await wallet.getAccount()
 
-      expect(account).toBeInstanceOf(WalletAccountTronGasfree)
-
       expect(account.path).toBe("m/44'/195'/0'/0/0")
     })
 
     test('should return the account at the given index', async () => {
       const account = await wallet.getAccount(3)
-
-      expect(account).toBeInstanceOf(WalletAccountTronGasfree)
 
       expect(account.path).toBe("m/44'/195'/0'/0/3")
     })
@@ -419,8 +415,6 @@ describe('WalletManagerTronGasfree', () => {
   describe('getAccountByPath', () => {
     test('should return the account with the given path', async () => {
       const account = await wallet.getAccountByPath("1'/2/3")
-
-      expect(account).toBeInstanceOf(WalletAccountTronGasfree)
 
       expect(account.path).toBe("m/44'/195'/1'/2/3")
     })

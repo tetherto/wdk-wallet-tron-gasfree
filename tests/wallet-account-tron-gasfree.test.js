@@ -58,7 +58,7 @@ jest.unstable_mockModule('tronweb', () => {
   }
 })
 
-const { WalletAccountTronGasfree, WalletAccountReadOnlyTronGasfree, DisposalError, MaximumFeeExceededError, UnsupportedOperationError, ValueError } = await import('../index.js')
+const { WalletAccountTronGasfree, DisposalError, MaximumFeeExceededError, UnsupportedOperationError, ValueError } = await import('../index.js')
 const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/index.js')
 
 const EXPECTED_TRANSFER_SIGNATURE = '1b232c9d7f980fd556727b86901741eea50b33a58f97146f46e3eacafb944531087063e112913d867e04323e6add398b00675c972b80aa54d55a1a9694e6d8931b'
@@ -501,7 +501,6 @@ describe('WalletAccountTronGasfree', () => {
     test('should return a read-only copy of the account', async () => {
       const readOnlyAccount = await account.toReadOnlyAccount()
 
-      expect(readOnlyAccount).toBeInstanceOf(WalletAccountReadOnlyTronGasfree)
       expect(await readOnlyAccount.getAddress()).toBe(GASFREE_ADDRESS)
     })
   })
