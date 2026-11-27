@@ -182,36 +182,6 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   }
 
   /**
-   * Quotes the costs of a transfer operation using a pre-fetched gasfree account.
-   *
-   * @protected
-   * @param {TronGasfreeAccountInfo} gasFreeAccount - The pre-fetched gasfree account.
-   * @param {TransferOptions} options - The transfer's options.
-   * @returns {Promise<Omit<TransferResult, 'hash'> & TronActivationFee>} The transfer's quotes.
-   * @throws {Error} If the provider doesn't support the given TRC-20 token.
-   */
-  async _quoteTransferWithAccount (gasFreeAccount, { token }) {
-    const response = await this._sendRequestToGasfreeProvider('GET', '/api/v1/config/token/all')
-
-    const resp = await response.json()
-
-    if (resp.code !== 200) {
-      throw new Error(resp.reason)
-    }
-
-    const paymasterToken = resp.data.tokens.find(({ tokenAddress }) => tokenAddress === token)
-
-    if (!paymasterToken) {
-      throw new Error(`Token ${token} is not supported by the gasfree provider.`)
-    }
-
-    const activationFee = !gasFreeAccount.active ? paymasterToken.activateFee : 0
-    const fee = BigInt(paymasterToken.transferFee) + BigInt(activationFee)
-
-    return { fee: BigInt(fee), activationFee: BigInt(activationFee) }
-  }
-
-  /**
    * Verifies a message's signature.
    *
    * @param {string} message - The original message.
@@ -283,6 +253,36 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
    */
   get defaultWaitTimeout () {
     return 120000
+  }
+
+  /**
+   * Quotes the costs of a transfer operation using a pre-fetched gasfree account.
+   *
+   * @protected
+   * @param {TronGasfreeAccountInfo} gasFreeAccount - The pre-fetched gasfree account.
+   * @param {TransferOptions} options - The transfer's options.
+   * @returns {Promise<Omit<TransferResult, 'hash'> & TronActivationFee>} The transfer's quotes.
+   * @throws {Error} If the provider doesn't support the given TRC-20 token.
+   */
+  async _quoteTransferWithAccount (gasFreeAccount, { token }) {
+    const response = await this._sendRequestToGasfreeProvider('GET', '/api/v1/config/token/all')
+
+    const resp = await response.json()
+
+    if (resp.code !== 200) {
+      throw new Error(resp.reason)
+    }
+
+    const paymasterToken = resp.data.tokens.find(({ tokenAddress }) => tokenAddress === token)
+
+    if (!paymasterToken) {
+      throw new Error(`Token ${token} is not supported by the gasfree provider.`)
+    }
+
+    const activationFee = !gasFreeAccount.active ? paymasterToken.activateFee : 0
+    const fee = BigInt(paymasterToken.transferFee) + BigInt(activationFee)
+
+    return { fee: BigInt(fee), activationFee: BigInt(activationFee) }
   }
 
   /**

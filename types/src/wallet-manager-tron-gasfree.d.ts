@@ -105,8 +105,6 @@ export default class WalletManagerTronGasfree extends WalletManager<ISignerTron>
      * default or via {@link addSigner}, are never disposed. Calling it again has no effect.
      */
     dispose(): void;
-    /** @private */
-    private _accountConfig;
     /**
      * Returns the current fee rates.
      *
@@ -114,6 +112,8 @@ export default class WalletManagerTronGasfree extends WalletManager<ISignerTron>
      * @throws {ProviderRequiredError} If the wallet is not connected to tron web.
      */
     getFeeRates(): Promise<FeeRates>;
+    /** @private */
+    private _accountConfig;
 }
 export type NoSuchElementError = import("@tetherto/wdk-wallet").NoSuchElementError;
 export type FeeRates = import("@tetherto/wdk-wallet-tron").FeeRates;

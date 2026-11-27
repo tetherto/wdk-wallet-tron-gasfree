@@ -224,11 +224,6 @@ export default class WalletManagerTronGasfree extends WalletManager {
     super.dispose()
   }
 
-  /** @private */
-  _accountConfig () {
-    return { ...this._config, provider: this._tronWeb }
-  }
-
   /**
    * Returns the current fee rates.
    *
@@ -248,5 +243,10 @@ export default class WalletManagerTronGasfree extends WalletManager {
       normal: fee * WalletManagerTron._FEE_RATE_NORMAL_MULTIPLIER / 100n,
       fast: fee * WalletManagerTron._FEE_RATE_FAST_MULTIPLIER / 100n
     }
+  }
+
+  /** @private */
+  _accountConfig () {
+    return { ...this._config, provider: this._tronWeb }
   }
 }
