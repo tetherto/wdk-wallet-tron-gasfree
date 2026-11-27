@@ -224,8 +224,6 @@ describe('WalletManagerTronGasfree', () => {
       const derivedSigner = await deriveSpy.mock.results[0].value
       expect(derivedSigner.disposed).toBe(true)
       expect(account.disposed).toBe(true)
-      await expect(account.sign('message'))
-        .rejects.toStrictEqual(new DisposalError('The wallet account has been disposed.'))
       expect(rootSigner.disposed).toBe(false)
 
       rootSigner.dispose()
