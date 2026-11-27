@@ -329,9 +329,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
    * @returns {Promise<string>} The owner's address.
    */
   async _getOwnerAddress () {
-    this._ownerAccountAddress ??= await this._signer.getAddress()
-
-    return this._ownerAccountAddress
+    return await this._signer.getAddress()
   }
 
   /** @private */

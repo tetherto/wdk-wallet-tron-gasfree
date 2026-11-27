@@ -93,7 +93,7 @@ export default class WalletAccountReadOnlyTronGasfree extends WalletAccountReadO
   /**
    * Creates a new read-only tron gasfree wallet account.
    *
-   * @param {string} [address] - The tron account's address. Subclasses that resolve the owner's address themselves leave it unset and override {@link _getOwnerAddress}.
+   * @param {string} address - The tron account's address.
    * @param {Omit<TronGasfreeWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>} config - The configuration object.
    */
   constructor (address, config) {
