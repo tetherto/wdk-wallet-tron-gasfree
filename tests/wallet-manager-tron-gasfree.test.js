@@ -387,6 +387,14 @@ describe('WalletManagerTronGasfree', () => {
     test('should apply its transfer max fee to the accounts it returns', async () => {
       const cappedWallet = new WalletManagerTronGasfree(SEED_PHRASE, { ...CONFIG, transferMaxFee: 49_999 })
       const TOKEN = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+      const OWNER_ADDRESS = 'TXngH8bVadn9ZWtKBgjKQcqN1GsZ7A1jcb'
+      const request = (path, authorization) => [CONFIG.gasFreeProvider + path, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', Timestamp: '1700000000', Authorization: authorization },
+        body: null
+      }]
+
+      jest.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
 
       const fetchMock = jest.spyOn(global, 'fetch').mockImplementation((url) => {
         const respond = (data) => Promise.resolve({ ok: true, json: () => Promise.resolve({ code: 200, data }) })
@@ -406,7 +414,9 @@ describe('WalletManagerTronGasfree', () => {
 
       await expect(account.transfer({ token: TOKEN, recipient: 'TAibbFBAkcNioexXTFWKbp65mgLp7JiqHD', amount: 100_000_000 }))
         .rejects.toStrictEqual(new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.'))
-      expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/v1/gasfree/submit'))).toBe(false)
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(fetchMock).toHaveBeenNthCalledWith(1, ...request(`/api/v1/address/${OWNER_ADDRESS}`, 'ApiKey test-api-key:5wlZcP3xHCPi1r2MhHXESwSxNrihRLfs6/NXL2ocfs4='))
+      expect(fetchMock).toHaveBeenNthCalledWith(2, ...request('/api/v1/config/token/all', 'ApiKey test-api-key:aS0hiU1rixzHoRrBt1NaZGMTu3bAh5NgMMVD+fFS02I='))
 
       cappedWallet.dispose()
     })

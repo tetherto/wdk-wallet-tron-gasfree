@@ -112,6 +112,26 @@ function mockFetchResponse (data) {
   })
 }
 
+const FIXED_TIMESTAMP = 1_700_000_000
+
+const AUTHORIZATIONS = {
+  [`GET /api/v1/address/${ACCOUNT.address}`]: 'ApiKey test-api-key:5wlZcP3xHCPi1r2MhHXESwSxNrihRLfs6/NXL2ocfs4=',
+  'GET /api/v1/config/token/all': 'ApiKey test-api-key:aS0hiU1rixzHoRrBt1NaZGMTu3bAh5NgMMVD+fFS02I=',
+  'POST /api/v1/gasfree/submit': 'ApiKey test-api-key:Jm9DxkuG/t3mo3cp10aAfblRN0qYalCdN+O+6jfqP2I='
+}
+
+function request (method, path, body) {
+  return [CONFIG.gasFreeProvider + path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Timestamp: `${FIXED_TIMESTAMP}`,
+      Authorization: AUTHORIZATIONS[`${method} ${path}`]
+    },
+    body: body ? JSON.stringify(body) : null
+  }]
+}
+
 describe('WalletAccountTronGasfree', () => {
   let account
   let fetchMock
@@ -127,6 +147,8 @@ describe('WalletAccountTronGasfree', () => {
       return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
     })
 
+    jest.spyOn(Date, 'now').mockReturnValue(FIXED_TIMESTAMP * 1_000)
+
     account = new WalletAccountTronGasfree(SEED_PHRASE, "0'/0/0", CONFIG)
   })
 
@@ -135,6 +157,14 @@ describe('WalletAccountTronGasfree', () => {
 
     jest.restoreAllMocks()
   })
+
+  function expectRequests (...requests) {
+    expect(fetchMock).toHaveBeenCalledTimes(requests.length)
+
+    requests.forEach((args, index) => {
+      expect(fetchMock).toHaveBeenNthCalledWith(index + 1, ...args)
+    })
+  }
 
   describe('constructor', () => {
     test('should successfully initialize an account for the given seed phrase and path', () => {
@@ -357,10 +387,20 @@ describe('WalletAccountTronGasfree', () => {
       })
     }
 
-    test('should successfully transfer tokens via gasfree', async () => {
-      const FIXED_TIMESTAMP = 1700000000
-      jest.spyOn(Date, 'now').mockReturnValue(FIXED_TIMESTAMP * 1_000)
+    const EXPECTED_SUBMIT_BODY = {
+      token: TRANSFER.token,
+      serviceProvider: CONFIG.serviceProvider,
+      user: ACCOUNT.address,
+      receiver: TRANSFER.recipient,
+      value: '100000000',
+      maxFee: '50000',
+      deadline: FIXED_TIMESTAMP + 300,
+      version: 1,
+      nonce: 1,
+      sig: EXPECTED_TRANSFER_SIGNATURE
+    }
 
+    test('should successfully transfer tokens via gasfree', async () => {
       mockTransferFetch()
 
       const { hash, fee, activationFee } = await account.transfer(TRANSFER)
@@ -368,32 +408,17 @@ describe('WalletAccountTronGasfree', () => {
       expect(hash).toBe('gasfree-tx-id-abc123')
       expect(fee).toBe(50_000n)
       expect(activationFee).toBe(0n)
-
-      const submitCall = fetchMock.mock.calls.find(([url]) => url.includes('/api/v1/gasfree/submit'))
-      const submitBody = JSON.parse(submitCall[1].body)
-
-      expect(submitCall[1].method).toBe('POST')
-      expect(submitBody).toEqual(expect.objectContaining({
-        token: TRANSFER.token,
-        serviceProvider: CONFIG.serviceProvider,
-        user: ACCOUNT.address,
-        receiver: TRANSFER.recipient,
-        value: TRANSFER.amount.toString(),
-        nonce: GASFREE_ACCOUNT_RESPONSE.data.nonce
-      }))
-      expect(submitBody.sig).toBe(EXPECTED_TRANSFER_SIGNATURE)
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'), request('POST', '/api/v1/gasfree/submit', EXPECTED_SUBMIT_BODY))
     })
 
     test('should sign the transfer with a signer supplied by the caller', async () => {
-      jest.spyOn(Date, 'now').mockReturnValue(1700000000 * 1_000)
       const signer = new PrivateKeySignerTron(ACCOUNT.keyPair.privateKey)
       const signerAccount = new WalletAccountTronGasfree(signer, CONFIG)
       mockTransferFetch()
 
       await signerAccount.transfer(TRANSFER)
 
-      const submitCall = fetchMock.mock.calls.find(([url]) => url.includes('/api/v1/gasfree/submit'))
-      expect(JSON.parse(submitCall[1].body).sig).toBe(EXPECTED_TRANSFER_SIGNATURE)
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'), request('POST', '/api/v1/gasfree/submit', EXPECTED_SUBMIT_BODY))
 
       signer.dispose()
     })
@@ -429,7 +454,7 @@ describe('WalletAccountTronGasfree', () => {
 
       await expect(account.transfer(TRANSFER))
         .rejects.toStrictEqual(new DisposalError('The signer has been disposed.'))
-      expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/v1/gasfree/submit'))).toBe(false)
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'))
     })
 
     test('should throw if the signer does not expose its private key', async () => {
@@ -449,6 +474,7 @@ describe('WalletAccountTronGasfree', () => {
 
       await expect(account.transfer(TRANSFER, { transferMaxFee: 0 }))
         .rejects.toStrictEqual(new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.'))
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'))
     })
 
     test('should throw if the transfer fee exceeds the transfer max fee of the wallet configuration', async () => {
@@ -458,7 +484,7 @@ describe('WalletAccountTronGasfree', () => {
 
       await expect(cappedAccount.transfer(TRANSFER))
         .rejects.toStrictEqual(new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.'))
-      expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/v1/gasfree/submit'))).toBe(false)
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'))
 
       cappedAccount.dispose()
     })
@@ -472,6 +498,7 @@ describe('WalletAccountTronGasfree', () => {
 
       expect(hash).toBe('gasfree-tx-id-abc123')
       expect(fee).toBe(50_000n)
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'), request('POST', '/api/v1/gasfree/submit', EXPECTED_SUBMIT_BODY))
 
       cappedAccount.dispose()
     })
@@ -483,6 +510,7 @@ describe('WalletAccountTronGasfree', () => {
 
       await expect(cappedAccount.transfer(TRANSFER, { transferMaxFee: undefined }))
         .rejects.toStrictEqual(new MaximumFeeExceededError('The transfer operation exceeds the transfer max fee.'))
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'))
 
       cappedAccount.dispose()
     })
@@ -494,6 +522,7 @@ describe('WalletAccountTronGasfree', () => {
 
       await expect(account.transfer(TRANSFER))
         .rejects.toThrow('Insufficient balance')
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`), request('GET', '/api/v1/config/token/all'), request('POST', '/api/v1/gasfree/submit', EXPECTED_SUBMIT_BODY))
     })
   })
 
@@ -502,6 +531,7 @@ describe('WalletAccountTronGasfree', () => {
       const readOnlyAccount = await account.toReadOnlyAccount()
 
       expect(await readOnlyAccount.getAddress()).toBe(GASFREE_ADDRESS)
+      expectRequests(request('GET', `/api/v1/address/${ACCOUNT.address}`))
     })
   })
 })
