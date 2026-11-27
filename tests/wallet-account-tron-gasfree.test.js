@@ -151,6 +151,11 @@ describe('WalletAccountTronGasfree', () => {
   })
 
   describe('fromPrivateKey', () => {
+    test('should throw if the private key is invalid', () => {
+      expect(() => WalletAccountTronGasfree.fromPrivateKey('zz', CONFIG))
+        .toThrow(expect.objectContaining({ constructor: ValueError, message: 'The private key must be a valid 32-byte secp256k1 key (hex or bytes).' }))
+    })
+
     test('should create an account backed by the given private key', async () => {
       const keyAccount = WalletAccountTronGasfree.fromPrivateKey(ACCOUNT.keyPair.privateKey, CONFIG)
 
@@ -233,6 +238,15 @@ describe('WalletAccountTronGasfree', () => {
     test('should return the correct signature', async () => {
       const signature = await account.sign(MESSAGE)
       expect(signature).toBe(EXPECTED_SIGNATURE)
+    })
+
+    test('should throw if a signer supplied by the caller has been disposed', async () => {
+      const signer = new PrivateKeySignerTron(ACCOUNT.keyPair.privateKey)
+      const signerAccount = new WalletAccountTronGasfree(signer, CONFIG)
+      signer.dispose()
+
+      await expect(signerAccount.sign(MESSAGE))
+        .rejects.toStrictEqual(new DisposalError('The signer has been disposed.'))
     })
   })
 

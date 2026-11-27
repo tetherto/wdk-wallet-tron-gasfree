@@ -46,7 +46,7 @@ jest.unstable_mockModule('tronweb', () => {
   }
 })
 
-const { default: WalletManagerTronGasfree, WalletAccountTronGasfree, DisposalError, InvalidSignerError, MaximumFeeExceededError, ProviderRequiredError, ValueError } = await import('../index.js')
+const { default: WalletManagerTronGasfree, WalletAccountTronGasfree, DisposalError, InvalidSignerError, MaximumFeeExceededError, NoSuchElementError, ProviderRequiredError, ValueError } = await import('../index.js')
 const { SeedSignerTron, PrivateKeySignerTron } = await import('../src/signers/index.js')
 
 const UNSUPPORTED_DERIVATION_ERROR = new InvalidSignerError('The signer does not support account derivation.')
@@ -288,6 +288,25 @@ describe('WalletManagerTronGasfree', () => {
     test('should throw if no signer is registered with the given name', async () => {
       await expect(wallet.getAccount('missing'))
         .rejects.toThrow('No signer found with name "missing".')
+    })
+
+    test('should throw on getAccount by index if no signer is registered with the given name', async () => {
+      await expect(wallet.getAccount(0, { signerName: 'missing' }))
+        .rejects.toStrictEqual(new NoSuchElementError('No signer found with name "missing".'))
+    })
+
+    test('should throw on getAccountByPath if no signer is registered with the given name', async () => {
+      await expect(wallet.getAccountByPath("0'/0/0", { signerName: 'missing' }))
+        .rejects.toStrictEqual(new NoSuchElementError('No signer found with name "missing".'))
+    })
+
+    test('should throw on getAccountByPath if the named signer has been disposed', async () => {
+      const signer = new SeedSignerTron(SECOND_SEED_PHRASE)
+      wallet.addSigner('second', signer)
+      signer.dispose()
+
+      await expect(wallet.getAccountByPath("0'/0/0", { signerName: 'second' }))
+        .rejects.toStrictEqual(new DisposalError('The signer has been disposed.'))
     })
   })
 
