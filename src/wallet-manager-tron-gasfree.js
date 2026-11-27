@@ -224,13 +224,7 @@ export default class WalletManagerTronGasfree extends WalletManager {
     super.dispose()
   }
 
-  /**
-   * Builds the account config, injecting the manager's shared tron web client so accounts
-   * reuse it instead of opening their own.
-   *
-   * @private
-   * @returns {TronGasfreeWalletConfig} The account configuration.
-   */
+  /** @private */
   _accountConfig () {
     return { ...this._config, provider: this._tronWeb }
   }

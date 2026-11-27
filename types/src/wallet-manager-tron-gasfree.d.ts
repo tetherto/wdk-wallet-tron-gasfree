@@ -105,13 +105,7 @@ export default class WalletManagerTronGasfree extends WalletManager<ISignerTron>
      * default or via {@link addSigner}, are never disposed. Calling it again has no effect.
      */
     dispose(): void;
-    /**
-     * Builds the account config, injecting the manager's shared tron web client so accounts
-     * reuse it instead of opening their own.
-     *
-     * @private
-     * @returns {TronGasfreeWalletConfig} The account configuration.
-     */
+    /** @private */
     private _accountConfig;
     /**
      * Returns the current fee rates.
