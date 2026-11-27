@@ -87,7 +87,7 @@ export default class WalletAccountTronGasfree extends WalletAccountReadOnlyTronG
      *
      * @param {string} message - The message to sign.
      * @returns {Promise<string>} The message's signature.
-     * @throws {DisposalError} If the wallet account has been disposed.
+     * @throws {DisposalError} If the wallet account or its signer has been disposed.
      */
     sign(message: string): Promise<string>;
     /**
