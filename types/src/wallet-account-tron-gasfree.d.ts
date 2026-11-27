@@ -158,7 +158,6 @@ export type TronTransaction = import("@tetherto/wdk-wallet-tron").TronTransactio
 export type TransferOptions = import("@tetherto/wdk-wallet-tron").TransferOptions;
 export type TransferResult = import("@tetherto/wdk-wallet-tron").TransferResult;
 export type TronActivationFee = import("@tetherto/wdk-wallet-tron").TronActivationFee;
-export type TronTransactionReceipt = import("@tetherto/wdk-wallet-tron").TronTransactionReceipt;
 export type ISignerTron = import("@tetherto/wdk-wallet-tron/signers").ISignerTron;
 export type TronGasfreeWalletConfig = import("./wallet-account-read-only-tron-gasfree.js").TronGasfreeWalletConfig;
 import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-gasfree.js';

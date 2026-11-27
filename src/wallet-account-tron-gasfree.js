@@ -35,8 +35,6 @@ import WalletAccountReadOnlyTronGasfree from './wallet-account-read-only-tron-ga
 /** @typedef {import('@tetherto/wdk-wallet-tron').TransferResult} TransferResult */
 /** @typedef {import('@tetherto/wdk-wallet-tron').TronActivationFee} TronActivationFee */
 
-/** @typedef {import('@tetherto/wdk-wallet-tron').TronTransactionReceipt } TronTransactionReceipt */
-
 /** @typedef {import('@tetherto/wdk-wallet-tron/signers').ISignerTron} ISignerTron */
 
 /** @typedef {import('./wallet-account-read-only-tron-gasfree.js').TronGasfreeWalletConfig} TronGasfreeWalletConfig */
