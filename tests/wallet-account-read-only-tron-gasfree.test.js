@@ -532,7 +532,8 @@ describe('WalletAccountReadOnlyTronGasfree', () => {
         return Promise.reject(new Error(`Unexpected fetch URL: ${url}`))
       })
 
-      await expect(account.getTransaction(GASFREE_TX_ID)).rejects.toThrow(NoSuchElementError)
+      await expect(account.getTransaction(GASFREE_TX_ID))
+        .rejects.toStrictEqual(new NoSuchElementError(`No transfer found for '${GASFREE_TX_ID}'.`))
       expect(getTransactionMock).not.toHaveBeenCalled()
       expectRequests(request('GET', `/api/v1/address/${OWNER_ADDRESS}`), request('GET', `/api/v1/gasfree/${GASFREE_TX_ID}`))
     })
